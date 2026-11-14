@@ -9,7 +9,7 @@ const STATUS = {
   error: 'Could not reach the cloud. Changes are saved on this phone and will sync later.',
 }
 
-export default function Settings({ v, snap }) {
+export default function Settings({ v, snap, onClose }) {
   const { db, session, status } = snap
   const waiting = Object.keys(db.pending).length
   const save = (patch) => write([['profiles', { id: v.uid, ...patch }]])
@@ -32,6 +32,9 @@ export default function Settings({ v, snap }) {
 
   return (
     <section>
+      <button className="back" onClick={onClose}>
+        ‹ Back
+      </button>
       <div className="weekhead">
         <p className="eyebrow">Settings</p>
         <h2>Profile</h2>

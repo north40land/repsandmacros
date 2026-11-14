@@ -1,5 +1,22 @@
 # Changelog
 
+## Phase 7: Weekly dashboard (2026-11-13)
+
+Tested in local-only mode on a computer. Not yet confirmed on a phone.
+
+- The app now opens on a Home screen showing the week (Monday to Sunday), with arrows to look back at earlier weeks.
+- At a glance: workouts done (of 6 planned when following a program), volume lifted with an 8-week trend line, average daily calories and protein against target, average sleep against target, and water as a percent of target.
+- Dosing: what is still due today and anything missed this week.
+- Body trend: current weight with a trend line, change over 7 and 30 days, and the date of the last measurements.
+- Lifts: personal records set this week (a best set heavier than anything logged before).
+- Nutrition adherence: the seven-day strip; tap a day to open it.
+- Quick actions pinned above the tabs: log a workout, food, weight or a dose. Food opens the add screen for the meal that fits the time of day.
+- Each card opens the screen behind it. "Export week (CSV)" saves one row per day.
+- Tabs are now Home, Train, Food, Doses, Progress. Settings opens from the Home screen.
+- No database changes.
+
+Not built: PDF export (the spec lists export as a nice-to-have; CSV is included).
+
 ## Phase 6: Water and sleep (2026-11-13)
 
 Tested in local-only mode on a computer. Saving to the live database is untested because the test preview was signed out.

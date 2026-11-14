@@ -33,13 +33,13 @@ const tidy = (n) => Math.round(n * 10) / 10
 const show = (n) => Number(tidy(n)).toLocaleString(undefined, { maximumFractionDigits: 1 })
 const length = (value, from, to) => (value == null || from === to ? value : tidy(to === 'cm' ? value * 2.54 : value / 2.54))
 
-export default function Body({ v }) {
+export default function Body({ v, startCheckIn }) {
   const unit = v.profile.default_unit
   const lengthUnit = unit === 'kg' ? 'cm' : 'in'
   const today = localDate()
   const [range, setRange] = useState('12w')
   const [measure, setMeasure] = useState('body_fat')
-  const [editing, setEditing] = useState(null) // 'new' | an entry
+  const [editing, setEditing] = useState(startCheckIn ? 'new' : null) // 'new' | an entry
 
   if (editing) return <CheckIn v={v} entry={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />
 

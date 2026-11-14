@@ -4,6 +4,7 @@ import { useDB, write, sync } from './db'
 import { view } from './logic'
 import Auth from './Auth'
 import { ConfirmHost } from './confirm'
+import Dashboard from './Dashboard'
 import Today from './Today'
 import Food from './Food'
 import Progress from './Progress'
@@ -13,18 +14,25 @@ import { localDate } from './logic'
 import { addDays } from './calc'
 import Settings from './Settings'
 
+// Settings is opened from the Home screen, so it has no tab of its own.
 const TABS = [
-  ['today', 'Today'],
+  ['home', 'Home'],
+  ['today', 'Train'],
   ['food', 'Food'],
   ['doses', 'Doses'],
   ['progress', 'Progress'],
-  ['settings', 'Settings'],
 ]
 
 export default function App() {
   const snap = useDB()
   const { db, session, ready, status } = snap
-  const [tab, setTab] = useState(() => (new URLSearchParams(location.search).get('tab') === 'doses' ? 'doses' : 'today'))
+  const [tab, setTab] = useState(() => (new URLSearchParams(location.search).get('tab') === 'doses' ? 'doses' : 'home'))
+  // Where a dashboard shortcut wants a tab to open: a date, a form, a view. `n` forces a fresh start.
+  const [intent, setIntent] = useState({ n: 0 })
+  const go = (to, detail = {}) => {
+    setIntent((i) => ({ ...detail, n: i.n + 1 }))
+    setTab(to)
+  }
   const [firstScreen, setFirstScreen] = useState(null)
   const v = view(db)
   const waiting = Object.keys(db.pending).length
@@ -59,7 +67,10 @@ export default function App() {
       <Welcome
         uid={db.uid}
         suggested={session?.user?.user_metadata?.display_name || ''}
-        onDone={(browse) => setFirstScreen(browse ? { type: 'library' } : null)}
+        onDone={(browse) => {
+          setFirstScreen(browse ? { type: 'library' } : null)
+          if (browse) setTab('today')
+        }}
       />
     )
   }
@@ -74,18 +85,19 @@ export default function App() {
       )}
 
       <main>
-        {tab === 'today' && <Today v={v} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
-        {tab === 'food' && <Food v={v} />}
-        {tab === 'progress' && <Progress v={v} />}
-        {tab === 'doses' && <Doses v={v} />}
-        {tab === 'settings' && <Settings v={v} snap={snap} />}
+        {tab === 'home' && <Dashboard v={v} go={go} />}
+        {tab === 'today' && <Today key={intent.n} v={v} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
+        {tab === 'food' && <Food key={intent.n} v={v} intent={intent} />}
+        {tab === 'progress' && <Progress key={intent.n} v={v} intent={intent} />}
+        {tab === 'doses' && <Doses key={intent.n} v={v} />}
+        {tab === 'settings' && <Settings v={v} snap={snap} onClose={() => setTab('home')} />}
       </main>
 
       <ConfirmHost />
 
       <nav className="tabs">
         {TABS.map(([id, name]) => (
-          <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>
+          <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
             {name}
             {id === 'doses' && doseAlert && <span className="dot" aria-label="something is due" />}
           </button>

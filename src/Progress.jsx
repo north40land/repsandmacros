@@ -12,8 +12,8 @@ const VIEWS = [
   ['photos', 'Photos'],
 ]
 
-export default function Progress({ v }) {
-  const [view, setView] = useState('lifts')
+export default function Progress({ v, intent }) {
+  const [view, setView] = useState(intent?.view || 'lifts')
   return (
     <section>
       <div className="seg viewseg" role="tablist" aria-label="Progress view">
@@ -30,7 +30,7 @@ export default function Progress({ v }) {
             <p className="eyebrow">Progress</p>
             <h2>Body</h2>
           </div>
-          <Body v={v} />
+          <Body v={v} startCheckIn={Boolean(intent?.checkIn)} />
         </>
       )}
       {view === 'photos' && (

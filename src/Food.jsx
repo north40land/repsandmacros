@@ -10,10 +10,10 @@ import Calculator from './Calculator'
 import Week from './Week'
 import { Water, Sleep } from './Daily'
 
-export default function Food({ v }) {
+export default function Food({ v, intent }) {
   const today = localDate()
-  const [date, setDate] = useState(today)
-  const [screen, setScreen] = useState(null)
+  const [date, setDate] = useState(intent?.date && intent.date <= today ? intent.date : today)
+  const [screen, setScreen] = useState(intent?.add ? { type: 'add', meal: intent.add } : intent?.week ? { type: 'week' } : null)
   const close = () => setScreen(null)
 
   if (screen?.type === 'add') return <AddFood v={v} date={date} meal={screen.meal} onClose={close} />
