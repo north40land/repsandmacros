@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supa'
 import { fromLookup } from './nutrition'
+import { getDetector } from './scanner'
 
-const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e']
-
-// Look a packaged food up by barcode. Uses the camera where the browser can read
-// barcodes itself (the Barcode Detection API); otherwise the number is typed in.
+// Look a packaged food up by barcode: point the camera at it, or type the number.
 export default function Scan({ onFood, onBack }) {
-  const canScan = typeof window !== 'undefined' && 'BarcodeDetector' in window
+  const hasCamera = Boolean(navigator.mediaDevices?.getUserMedia)
   const video = useRef(null)
   const busy = useRef(false)
-  const [camera, setCamera] = useState(canScan ? 'starting' : 'unsupported') // starting | on | blocked | unsupported
+  const [camera, setCamera] = useState(hasCamera ? 'starting' : 'none') // starting | on | blocked | failed | none
   const [code, setCode] = useState('')
   const [state, setState] = useState('idle') // idle | looking | notfound | error | limited
 
@@ -28,29 +26,40 @@ export default function Scan({ onFood, onBack }) {
   }
 
   useEffect(() => {
-    if (!canScan) return
+    if (!hasCamera) return
     let stream
     let timer
     let stopped = false
     ;(async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        if (stopped) return stream.getTracks().forEach((t) => t.stop())
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      } catch {
+        return setCamera('blocked')
+      }
+      if (stopped) return stream.getTracks().forEach((t) => t.stop())
+      try {
         video.current.srcObject = stream
         await video.current.play()
+        const detector = await getDetector()
+        if (stopped) return
         setCamera('on')
-        const detector = new window.BarcodeDetector({ formats: FORMATS })
+        let lastMiss = ''
         timer = setInterval(async () => {
-          if (busy.current || !video.current) return
+          if (busy.current || !video.current || video.current.readyState < 2) return
           try {
             const found = await detector.detect(video.current)
-            if (found[0]?.rawValue) lookup(found[0].rawValue)
+            const value = found[0]?.rawValue
+            // Do not keep re-sending a code that was just looked up and not found.
+            if (value && value !== lastMiss) {
+              lastMiss = value
+              lookup(value)
+            }
           } catch {
             /* a frame that cannot be read is fine; try the next one */
           }
-        }, 350)
+        }, 300)
       } catch {
-        setCamera('blocked')
+        setCamera('failed')
       }
     })()
     return () => {
@@ -62,6 +71,7 @@ export default function Scan({ onFood, onBack }) {
   }, [])
 
   const digits = code.replace(/\D/g, '')
+  const showVideo = camera === 'starting' || camera === 'on'
 
   return (
     <section>
@@ -73,16 +83,19 @@ export default function Scan({ onFood, onBack }) {
         <h2>Find by barcode</h2>
       </div>
 
-      {canScan && camera !== 'blocked' && (
+      {showVideo && (
         <div className="camera">
-          <video ref={video} playsInline muted aria-label="Camera view" />
-          <p className="muted small">{camera === 'on' ? 'Hold the barcode inside the frame.' : 'Starting the camera'}</p>
+          <video ref={video} playsInline muted autoPlay aria-label="Camera view" />
+          <p className="muted small" role="status">
+            {camera === 'on' ? 'Hold the barcode steady inside the frame.' : 'Starting the camera'}
+          </p>
         </div>
       )}
-      {camera === 'blocked' && <p className="muted small">The camera is not available. Type the number under the barcode instead.</p>}
-      {camera === 'unsupported' && (
-        <p className="muted small">This browser cannot read barcodes with the camera. Type the number printed under the barcode.</p>
+      {camera === 'blocked' && (
+        <p className="muted small">The camera is switched off for this site. Allow it in your browser settings, or type the number under the barcode.</p>
       )}
+      {camera === 'failed' && <p className="muted small">The scanner could not start. Type the number under the barcode instead.</p>}
+      {camera === 'none' && <p className="muted small">No camera is available here. Type the number printed under the barcode.</p>}
 
       <form
         className="searchbar"

@@ -1,5 +1,13 @@
 # Changelog
 
+## Camera barcode scanning on iPhone (2026-11-13)
+
+Decoding tested on a computer with generated barcode images. Not tested with a real camera on any device.
+
+- The scan screen now reads barcodes with the camera on every browser. Where the browser has its own Barcode Detection API (Chrome on Android) that is used; everywhere else, including iPhone Safari, a bundled reader (`barcode-detector`, built on zxing) takes over.
+- The reader and its 0.9 MB decoder file are served from this site and only download the first time the scan screen is opened.
+- If the camera is refused or unavailable, the type-in box still works.
+
 ## Phase 3, part 2: Recipes and barcodes (2026-11-13)
 
 Tested in local-only mode and against the live database on a computer. Camera scanning has not been tested on any device.
