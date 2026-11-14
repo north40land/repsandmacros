@@ -34,7 +34,7 @@ export default function App() {
     setIntent((i) => ({ ...detail, n: i.n + 1 }))
     setTab(to)
   }
-  const [firstScreen, setFirstScreen] = useState(null)
+  const [welcome, setWelcome] = useState(false)
   const v = view(db)
   const waiting = Object.keys(db.pending).length
   const loaded = !supabase || db.pulledFor === db.uid
@@ -62,6 +62,16 @@ export default function App() {
     return () => clearTimeout(t)
   }, [waiting > 0])
 
+  // First time in: start a profile (using the name given at sign-up, if any), open it,
+  // and greet the person there. The profile row is what marks the account as set up.
+  const signedIn = !supabase || Boolean(session)
+  useEffect(() => {
+    if (!ready || !loaded || !signedIn || v.hasProfile) return
+    write([['profiles', { id: db.uid, display_name: session?.user?.user_metadata?.display_name || '', program_id: null }]])
+    setTab('settings')
+    setWelcome(true)
+  }, [ready, loaded, signedIn, v.hasProfile])
+
   const today = localDate()
   const doseAlert =
     dueToday(v, today).some((i) => !v.doseLogs[logKey(i.id, today)]) || missedOn(v, addDays(today, -1)).length > 0
@@ -71,18 +81,7 @@ export default function App() {
   if (supabase && db.pulledFor !== db.uid) {
     return <Splash text={status === 'error' ? 'Could not reach the cloud.' : 'Getting your data'} retry={status === 'error'} />
   }
-  if (!v.hasProfile) {
-    return (
-      <Welcome
-        uid={db.uid}
-        suggested={session?.user?.user_metadata?.display_name || ''}
-        onDone={(browse) => {
-          setFirstScreen(browse ? { type: 'library' } : null)
-          if (browse) setTab('today')
-        }}
-      />
-    )
-  }
+  if (!v.hasProfile) return <Splash text="Setting up" />
 
   return (
     <div className="app">
@@ -108,11 +107,13 @@ export default function App() {
 
       <main>
         {tab === 'home' && <Dashboard v={v} go={go} />}
-        {tab === 'today' && <Today key={intent.n} v={v} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
-        {tab === 'food' && <Food key={intent.n} v={v} intent={intent} />}
+        {tab === 'today' && <Today key={intent.n} v={v} />}
+        {tab === 'food' && <Food key={intent.n} v={v} intent={intent} go={go} />}
         {tab === 'progress' && <Progress key={intent.n} v={v} intent={intent} />}
         {tab === 'doses' && <Doses key={intent.n} v={v} />}
-        {tab === 'settings' && <Settings v={v} snap={snap} onClose={() => setTab('home')} />}
+        {tab === 'settings' && (
+          <Settings key={intent.n} v={v} snap={snap} intent={intent} onClose={() => setTab('home')} welcome={welcome} onWelcomed={() => setWelcome(false)} />
+        )}
       </main>
 
       <ConfirmHost />
@@ -166,43 +167,6 @@ function Splash({ text, retry }) {
           Try again
         </button>
       )}
-    </div>
-  )
-}
-
-function Welcome({ uid, suggested, onDone }) {
-  const [name, setName] = useState(suggested)
-  // Everyone starts with no program; "Browse programs" opens the library straight away.
-  const create = (browse) => {
-    if (!name.trim()) return
-    write([['profiles', { id: uid, display_name: name.trim(), program_id: null }]])
-    onDone(browse)
-  }
-  return (
-    <div className="app onboarding">
-      <h1>Workout</h1>
-      <p className="muted">Your own log, targets and progress.</p>
-      <form
-        className="card"
-        onSubmit={(e) => {
-          e.preventDefault()
-          create(true)
-        }}
-      >
-        <label>
-          Your name
-          <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
-        </label>
-        <p className="fieldname">How do you want to train?</p>
-        <button className="primary" disabled={!name.trim()}>
-          Follow a program
-          <small className="sub">Browse plans that set your sessions and weights</small>
-        </button>
-        <button type="button" className="secondary" disabled={!name.trim()} onClick={() => create(false)}>
-          Log my own workouts
-        </button>
-        <p className="muted small">You can start or stop a program at any time.</p>
-      </form>
     </div>
   )
 }

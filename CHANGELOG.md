@@ -1,5 +1,14 @@
 # Changelog
 
+## Calculator in the profile, and first-time setup (2026-11-13)
+
+Tested in local-only mode on a computer, including a brand-new user in a clean copy. Not tested with a real sign-up.
+
+- "Calculate my targets" moved to the profile (Home, Settings). When it is in use, the card shows the current calories and macros.
+- The manual targets page (Food, Edit targets) no longer has the calculator card; it has a link that goes straight to the calculator in the profile.
+- First time in, a person lands on their profile with a pop-up: "Welcome to the app. Make sure to fill in your profile to get things started." Their name is filled in from sign-up. Later opens go to Home as usual.
+- This replaces the old welcome screen, which asked for a name and whether to follow a program. Programs are still offered from the Train tab.
+
 ## Home screen: quick actions bar removed (2026-11-13)
 
 - Removed the Workout, Food, Weight and Dose buttons that sat above the tab bar on Home. The tab bar covers the same destinations, and the cards on Home still open their screens.

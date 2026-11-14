@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { supabase } from './supa'
 import { write, sync, signOut } from './db'
 import { askConfirm } from './confirm'
+import { latestTarget } from './nutrition'
+import Calculator from './Calculator'
+
 const STATUS = {
   off: 'Cloud accounts are not connected yet. Everything is saved on this phone only.',
   idle: 'Waiting to sync.',
@@ -9,10 +13,19 @@ const STATUS = {
   error: 'Could not reach the cloud. Changes are saved on this phone and will sync later.',
 }
 
-export default function Settings({ v, snap, onClose }) {
+// The profile: who you are, how the app behaves for you, and your calculated targets.
+// `welcome` shows the first-time greeting; `intent.calculator` opens the calculator directly.
+export default function Settings({ v, snap, onClose, intent, welcome, onWelcomed }) {
   const { db, session, status, online } = snap
+  const [calculating, setCalculating] = useState(Boolean(intent?.calculator))
   const waiting = Object.keys(db.pending).length
   const save = (patch) => write([['profiles', { id: v.uid, ...patch }]])
+
+  if (calculating) return <Calculator v={v} onClose={() => setCalculating(false)} />
+
+  const calculated = Boolean(v.metrics?.auto && v.metrics?.birth_date)
+  const target = latestTarget(v, 'training')
+  const num = (n) => Number(n).toLocaleString()
 
   const backup = () => {
     const blob = new Blob([JSON.stringify(db.tables, null, 2)], { type: 'application/json' })
@@ -43,7 +56,7 @@ export default function Settings({ v, snap, onClose }) {
       <div className="card">
         <label>
           Your name
-          <input value={v.profile.display_name} onChange={(e) => save({ display_name: e.target.value })} />
+          <input value={v.profile.display_name} onChange={(e) => save({ display_name: e.target.value })} autoComplete="given-name" />
         </label>
         <label>
           Weight unit for new sets
@@ -64,6 +77,20 @@ export default function Settings({ v, snap, onClose }) {
           </select>
         </label>
       </div>
+
+      <h3>Calories and macros</h3>
+      <button className="card libcard" onClick={() => setCalculating(true)}>
+        <span className="programhead">
+          <strong>Calculate my targets</strong>
+          {calculated && <em>In use</em>}
+        </span>
+        <span className="phasenote">
+          {calculated && target?.calories
+            ? `${num(target.calories)} calories · ${num(target.protein)} g protein · ${num(target.carbs)} g carbs · ${num(target.fat)} g fat`
+            : 'Work out your calories and macros from your height, weight, activity and goal.'}
+        </span>
+        <span className="go">{calculated ? 'Update my numbers ›' : 'Open the calculator ›'}</span>
+      </button>
 
       <h3>Account and sync</h3>
       <div className="card">
@@ -90,6 +117,20 @@ export default function Settings({ v, snap, onClose }) {
           Download a backup file
         </button>
       </div>
+
+      {welcome && (
+        <div className="scrim" onClick={onWelcomed}>
+          <div className="sheet" role="alertdialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
+            <p id="welcome-title">
+              <strong>Welcome to the app.</strong>
+            </p>
+            <p>Make sure to fill in your profile to get things started.</p>
+            <button className="primary" onClick={onWelcomed}>
+              Set up my profile
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

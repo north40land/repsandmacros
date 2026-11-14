@@ -17,7 +17,7 @@ const ok = (form) => FIELDS.every(([k]) => form[k] === '' || Number(form[k]) >= 
 const toRow = (form) => Object.fromEntries(FIELDS.map(([k]) => [k, form[k] === '' ? null : Number(form[k])]))
 
 // Daily targets. Each save is dated, so past days keep the targets they had at the time.
-export default function Targets({ v, onClose, onCalculator }) {
+export default function Targets({ v, onClose, onProfile }) {
   const today = localDate()
   const [training, setTraining] = useState(() => toForm(latestTarget(v, 'training')))
   const [rest, setRest] = useState(() => toForm(latestTarget(v, 'rest')))
@@ -74,13 +74,8 @@ export default function Targets({ v, onClose, onCalculator }) {
         <p className="muted">Leave a box empty if you do not want a target for it. Changes apply from today onward.</p>
       </div>
 
-      <button className="card libcard" onClick={onCalculator}>
-        <span className="programhead">
-          <strong>Calculate my targets</strong>
-          {v.metrics?.auto && v.metrics?.birth_date && <em>In use</em>}
-        </span>
-        <span className="phasenote">Work out calories and macros from your height, weight, activity and goal.</span>
-        <span className="go">Open the calculator ›</span>
+      <button className="link" onClick={onProfile}>
+        Have them worked out for you: Calculate my targets, in your profile ›
       </button>
       {v.metrics?.auto && v.metrics?.birth_date && (
         <p className="muted small">

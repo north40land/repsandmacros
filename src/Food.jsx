@@ -6,19 +6,17 @@ import { askConfirm } from './confirm'
 import { addDays as shift } from './calc'
 import AddFood from './AddFood'
 import Targets from './Targets'
-import Calculator from './Calculator'
 import Week from './Week'
 import { Water, Sleep } from './Daily'
 
-export default function Food({ v, intent }) {
+export default function Food({ v, intent, go }) {
   const today = localDate()
   const [date, setDate] = useState(intent?.date && intent.date <= today ? intent.date : today)
   const [screen, setScreen] = useState(intent?.add ? { type: 'add', meal: intent.add } : intent?.week ? { type: 'week' } : null)
   const close = () => setScreen(null)
 
   if (screen?.type === 'add') return <AddFood v={v} date={date} meal={screen.meal} onClose={close} />
-  if (screen?.type === 'targets') return <Targets v={v} onClose={close} onCalculator={() => setScreen({ type: 'calculator' })} />
-  if (screen?.type === 'calculator') return <Calculator v={v} onClose={close} />
+  if (screen?.type === 'targets') return <Targets v={v} onClose={close} onProfile={() => go('settings', { calculator: true })} />
   if (screen?.type === 'week') {
     return (
       <Week
