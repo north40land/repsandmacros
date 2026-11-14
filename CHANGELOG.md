@@ -1,5 +1,19 @@
 # Changelog
 
+## Phase 5: Body metrics and progress photos (2026-11-13)
+
+Body metrics tested in local-only mode on a computer. Photo upload and viewing are untested: they need a signed-in account, and the test preview was signed out.
+
+- Progress tab now has three views: Lifts, Body and Photos.
+- Body: log a check-in with date, weight, optional body fat and optional measurements (neck, shoulders, chest, waist, hips, left and right arm, left and right thigh, calves). One check-in per date; saving the same date replaces it.
+- Current weight with the change over 7 and 30 days.
+- Weight chart with every weigh-in and a 7-day rolling average, and a chart for body fat or any measurement. Range: 4 weeks, 12 weeks, 6 months, all. Touching the chart shows the values for that date.
+- Logging a new most-recent weight recalculates calculator targets when automatic targets are on, keeping any overrides.
+- Photos: front, side and back per date, shrunk on the phone to 1600 px before upload, stored in a private bucket under the person's own folder. A gallery by date, and a side-by-side compare of any two dates per pose.
+- Migration: `supabase/migrations/0008_progress_photos.sql` (progress_photos table, private `progress-photos` bucket with a 10 MB limit, and four storage policies). Applied to the live project on 2026-11-13. `body_metrics` was created earlier in 0005.
+
+Notes: measurements are stored with their unit (inches or centimetres) and converted for display. Photos need a connection; they are not queued offline.
+
 ## Dose reminders as phone notifications (2026-11-13)
 
 The server side is tested. The phone side (permission prompt, receiving and tapping a notification) cannot be tested from a computer and is unconfirmed.

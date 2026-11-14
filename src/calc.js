@@ -90,7 +90,7 @@ export function plan(m, weightLb) {
 export const withOverrides = (computed, overrides) => ({ ...computed, ...(overrides || {}) })
 
 export function latestWeightLb(v) {
-  const last = v.bodyMetrics[v.bodyMetrics.length - 1]
+  const last = [...v.bodyMetrics].reverse().find((b) => b.weight != null)
   return last ? convert(Number(last.weight), last.unit || 'lb', 'lb') : null
 }
 

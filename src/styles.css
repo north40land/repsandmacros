@@ -1067,3 +1067,118 @@ button.cell {
   border-color: #7a4038;
   color: var(--danger);
 }
+
+/* phase 5: body metrics, trend charts and photos */
+.viewseg {
+  margin-bottom: 4px;
+}
+.rangeseg {
+  margin-top: 16px;
+}
+.prs.three-up {
+  grid-template-columns: 1.2fr 1fr 1fr;
+  margin: 0 0 4px;
+}
+.prs.three-up > div {
+  background: var(--card);
+}
+.trend {
+  margin: 0;
+}
+.trend svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.trend .gridline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.trend .hairline {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.trend .axis {
+  fill: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.legend,
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.readout {
+  margin: 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.readout strong,
+.readout b {
+  color: var(--text);
+}
+.legend i,
+.readout i {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.shots {
+  gap: 8px;
+}
+.shot {
+  margin: 0;
+}
+.shot img,
+.pick img,
+.noshot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.noshot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.shot figcaption,
+.pick span {
+  display: block;
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pick {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+.pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  min-height: 0;
+  height: 100%;
+  cursor: pointer;
+}
+.compare {
+  margin-top: 4px;
+}

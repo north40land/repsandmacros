@@ -1,10 +1,52 @@
 import { useState } from 'react'
 import { PARTS } from './program'
 import { history, records, exKey, niceDate } from './logic'
+import Body from './Body'
+import Photos from './Photos'
 
 const num = (n) => Number(n).toLocaleString(undefined, { maximumFractionDigits: 1 })
 
+const VIEWS = [
+  ['lifts', 'Lifts'],
+  ['body', 'Body'],
+  ['photos', 'Photos'],
+]
+
 export default function Progress({ v }) {
+  const [view, setView] = useState('lifts')
+  return (
+    <section>
+      <div className="seg viewseg" role="tablist" aria-label="Progress view">
+        {VIEWS.map(([id, name]) => (
+          <button key={id} role="tab" aria-selected={view === id} onClick={() => setView(id)}>
+            {name}
+          </button>
+        ))}
+      </div>
+      {view === 'lifts' && <Lifts v={v} />}
+      {view === 'body' && (
+        <>
+          <div className="weekhead">
+            <p className="eyebrow">Progress</p>
+            <h2>Body</h2>
+          </div>
+          <Body v={v} />
+        </>
+      )}
+      {view === 'photos' && (
+        <>
+          <div className="weekhead">
+            <p className="eyebrow">Progress</p>
+            <h2>Photos</h2>
+          </div>
+          <Photos v={v} />
+        </>
+      )}
+    </section>
+  )
+}
+
+function Lifts({ v }) {
   const [open, setOpen] = useState(null)
   const unit = v.profile.default_unit
   const finished = v.workouts.filter((w) => w.finished_at).length
@@ -27,7 +69,7 @@ export default function Progress({ v }) {
     .filter((g) => g.lifts.length)
 
   return (
-    <section>
+    <>
       <div className="weekhead">
         <p className="eyebrow">Progress</p>
         <h2>
@@ -61,7 +103,7 @@ export default function Progress({ v }) {
           </ul>
         </div>
       ))}
-    </section>
+    </>
   )
 }
 
