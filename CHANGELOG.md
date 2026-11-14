@@ -1,5 +1,16 @@
 # Changelog
 
+## Phase 2: Progressive overload display (2026-11-13)
+
+Tested in local-only mode on a computer. Not yet confirmed on a phone.
+
+- While logging, each set shows the same set from the last session in grey above the input row ("Last time 100 × 10"). Works for presets, program days and free-form exercises with the same name.
+- A logged set is highlighted when it beats last time: heavier weight, or the same weight for more reps. A set heavier than anything logged before is marked "personal best".
+- Progress tab, per lift: history table (date, best set, total volume) and personal records (heaviest set, highest volume session, most reps at each weight).
+- Sets logged in kg and lb are converted to the person's default unit before comparing.
+- No database changes.
+- Developer note: `npm run dev:local` runs the app with no cloud connection, for testing without touching real accounts.
+
 ## Optional programs and program library (2026-11-13)
 
 - Following a program is now optional. Without one, the home screen leads with "Log a workout" and a "Follow a program" card.

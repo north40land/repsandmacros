@@ -86,18 +86,48 @@ export const exKey = (ex) => ex.exercise_key || `name:${ex.name.trim().toLowerCa
 
 export const loggedSets = (v, exerciseId) => (v.sets[exerciseId] || []).filter((s) => s.done && s.reps > 0)
 
-export function history(v, key) {
+const KG_TO_LB = 2.20462
+export const tidy = (n) => Math.round(n * 10) / 10
+
+// Convert a weight between lb and kg so sessions logged in different units compare fairly.
+export const convert = (weight, from, to) =>
+  weight == null || (from || 'lb') === to ? weight : tidy(to === 'lb' ? weight * KG_TO_LB : weight / KG_TO_LB)
+
+// Every session that includes this lift, oldest first. Each set gets `w`, its weight in `unit`.
+// `top` is the best set (heaviest, then most reps); `volume` is the sum of reps x weight.
+export function history(v, key, unit = v.profile.default_unit) {
   const out = []
   for (const w of v.workouts) {
     for (const ex of v.exercises[w.id] || []) {
       if (exKey(ex) !== key) continue
-      const sets = loggedSets(v, ex.id)
+      const sets = loggedSets(v, ex.id).map((s) => ({ ...s, w: convert(Number(s.weight), s.unit, unit) }))
       if (!sets.length) continue
-      const top = sets.reduce((a, b) => (Number(b.weight) > Number(a.weight) ? b : a))
-      out.push({ id: w.id, at: w.performed_at, block: w.program_block, week: w.program_week, top, sets })
+      const top = sets.reduce((a, b) => (b.w > a.w || (b.w === a.w && b.reps > a.reps) ? b : a))
+      const volume = tidy(sets.reduce((n, s) => n + s.w * s.reps, 0))
+      out.push({ id: w.id, at: w.performed_at, block: w.program_block, week: w.program_week, top, sets, volume })
     }
   }
   return out.sort((a, b) => time(a.at) - time(b.at))
+}
+
+// Personal records from a lift's history: heaviest set, highest-volume session,
+// and the most reps done at each weight (heaviest weights first).
+export function records(h) {
+  if (!h.length) return null
+  let heaviest = null
+  let volume = null
+  const byWeight = new Map()
+  for (const session of h) {
+    if (!volume || session.volume > volume.volume) volume = { volume: session.volume, at: session.at }
+    for (const set of session.sets) {
+      if (!heaviest || set.w > heaviest.w || (set.w === heaviest.w && set.reps > heaviest.reps)) {
+        heaviest = { w: set.w, reps: set.reps, at: session.at }
+      }
+      const best = byWeight.get(set.w)
+      if (!best || set.reps > best.reps) byWeight.set(set.w, { w: set.w, reps: set.reps, at: session.at })
+    }
+  }
+  return { heaviest, volume, repsAtWeight: [...byWeight.values()].sort((a, b) => b.w - a.w) }
 }
 
 // Dates are stored as UTC timestamps and shown in the phone's own time zone.

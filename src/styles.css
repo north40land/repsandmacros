@@ -703,3 +703,39 @@ section > .programs .program {
 .danger:disabled {
   opacity: 0.4;
 }
+
+/* phase 2: last session inline, beats and records */
+.lastline {
+  margin: 6px 0 2px 26px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.lastline b {
+  color: var(--accent);
+  font-weight: 600;
+}
+.row.beat input {
+  border-color: var(--accent);
+}
+.subhead {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 14px 0 6px;
+}
+.prs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.prs > div {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.prs strong {
+  display: block;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}

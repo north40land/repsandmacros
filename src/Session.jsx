@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CARDIO, extrasFor } from './program'
 import { write, uuid, nowISO } from './db'
 import { askConfirm } from './confirm'
-import { BODY_PARTS, bookFor, weekInfo, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
+import { BODY_PARTS, bookFor, weekInfo, convert, tidy, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
 
 // A number box that lets you type freely (including "12.") and saves each valid value.
 function NumInput({ value, fallback, onCommit, kind, ...rest }) {
@@ -182,9 +182,12 @@ export default function Session({ v, id, onClose }) {
 
       {exercises.map((ex) => {
         const tgt = isProgram ? target(v, ex.exercise_key, w.program_block, w.program_week) : null
-        const prev = history(v, exKey(ex))
-          .filter((h) => h.id !== w.id)
-          .pop()
+        // Earlier sessions of this lift, for the "last time" lines and personal bests.
+        const past = history(v, exKey(ex), unit).filter(
+          (h) => h.id !== w.id && Date.parse(h.at) <= Date.parse(w.performed_at),
+        )
+        const prev = past[past.length - 1]
+        const bestBefore = past.reduce((m, h) => Math.max(m, h.top.w), 0)
         const rows = rowsFor(ex)
         return (
           <div className="card ex" key={ex.id}>
@@ -208,7 +211,7 @@ export default function Session({ v, id, onClose }) {
             <p className="muted small">
               {isProgram && (tgt ? `Target ${tgt} lb` : 'No max yet. Log what you use and the app will estimate one.')}
               {isProgram && prev ? ' · ' : ''}
-              {prev ? `Last ${prev.top.weight} × ${prev.top.reps} (${niceDate(prev.at)})` : ''}
+              {prev ? `Last done ${niceDate(prev.at)}` : ''}
             </p>
             {rows.length > 0 && (
               <div className="rowhead">
@@ -227,9 +230,27 @@ export default function Session({ v, id, onClose }) {
               const ready = shownR > 0 && shownW != null
               const label = `${ex.name} set ${i + 1}`
               const rowKey = row.id || `n${row.set_number}`
+              // Compare with the same set last session: heavier, or the same weight for more reps.
+              const last = prev?.sets[i]
+              const nowW = row.done ? convert(Number(row.weight), row.unit, unit) : null
+              let gain = null
+              if (row.done && last) {
+                if (nowW > last.w) gain = `up ${tidy(nowW - last.w)} ${unit}`
+                else if (nowW === last.w && row.reps > last.reps) {
+                  gain = `up ${row.reps - last.reps} ${row.reps - last.reps === 1 ? 'rep' : 'reps'}`
+                }
+              }
+              const best = row.done && past.length > 0 && nowW > bestBefore
               return (
                 <div key={isProgram ? row.set_number : row.id}>
-                  <div className={row.done ? 'row done' : 'row'}>
+                  {(last || best) && (
+                    <p className="lastline">
+                      {last ? `Last time ${last.w} × ${last.reps}` : 'Extra set'}
+                      {gain && <b> · {gain}</b>}
+                      {best && <b> · personal best</b>}
+                    </p>
+                  )}
+                  <div className={`row${row.done ? ' done' : ''}${gain || best ? ' beat' : ''}`}>
                     <span>{i + 1}</span>
                     <NumInput kind="weight" aria-label={`${label} weight`} value={row.weight} fallback={shownW} onCommit={(n) => saveSet(ex, row, { weight: n })} />
                     <NumInput kind="reps" aria-label={`${label} reps`} value={row.reps} fallback={shownR} onCommit={(n) => saveSet(ex, row, { reps: n })} />

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --port 5199 --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port 5199"
+    "preview": "vite preview --port 5199",
+    "dev:local": "vite --port 5198 --strictPort --mode localonly"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

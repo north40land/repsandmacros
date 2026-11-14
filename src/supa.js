@@ -4,4 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = url && key ? createClient(url, key) : null
+// `npm run dev:local` sets VITE_LOCAL_ONLY so features can be tested without touching real accounts.
+const localOnly = import.meta.env.VITE_LOCAL_ONLY === '1'
+
+export const supabase = url && key && !localOnly ? createClient(url, key) : null

@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { PARTS } from './program'
-import { history, exKey, niceDate } from './logic'
+import { history, records, exKey, niceDate } from './logic'
+
+const num = (n) => Number(n).toLocaleString(undefined, { maximumFractionDigits: 1 })
 
 export default function Progress({ v }) {
   const [open, setOpen] = useState(null)
+  const unit = v.profile.default_unit
   const finished = v.workouts.filter((w) => w.finished_at).length
 
   // Free-form exercises, grouped by name.
@@ -17,7 +20,11 @@ export default function Progress({ v }) {
       name: 'Other exercises',
       lifts: [...others].map(([key, name]) => ({ key, name })).sort((a, b) => a.name.localeCompare(b.name)),
     },
-  ].filter((g) => g.lifts.length)
+  ]
+    .map((g) => ({ ...g, lifts: g.lifts.map((l) => ({ ...l, h: history(v, l.key, unit) })) }))
+    // Program lifts only appear once they have been logged or while a program is being followed.
+    .map((g) => ({ ...g, lifts: v.hasProgram || g.name === 'Other exercises' ? g.lifts : g.lifts.filter((l) => l.h.length) }))
+    .filter((g) => g.lifts.length)
 
   return (
     <section>
@@ -26,50 +33,28 @@ export default function Progress({ v }) {
         <h2>
           {finished} {finished === 1 ? 'workout' : 'workouts'} logged
         </h2>
-        <p className="muted">Heaviest set per workout, by lift. Tap a lift for its history.</p>
+        <p className="muted">Tap a lift for its history and personal records. Weights are in {unit}.</p>
       </div>
+
+      {!groups.length && <p className="muted">Nothing logged yet. Your lifts will appear here after your first workout.</p>}
 
       {groups.map((group) => (
         <div key={group.name}>
           <h3>{group.name}</h3>
           <ul className="list">
-            {group.lifts.map((lift) => {
-              const h = history(v, lift.key)
+            {group.lifts.map(({ key, name, h }) => {
               const last = h[h.length - 1]
-              const change = h.length > 1 ? Number(last.top.weight) - Number(h[0].top.weight) : null
+              const change = h.length > 1 ? Math.round((last.top.w - h[0].top.w) * 10) / 10 : null
               return (
-                <li key={lift.key}>
-                  <button disabled={!h.length} onClick={() => setOpen(open === lift.key ? null : lift.key)}>
-                    <span>{lift.name}</span>
+                <li key={key}>
+                  <button disabled={!h.length} aria-expanded={open === key} onClick={() => setOpen(open === key ? null : key)}>
+                    <span>{name}</span>
                     <small>
-                      {last ? `${last.top.weight} ${last.top.unit || 'lb'} × ${last.top.reps}` : 'Not logged yet'}
-                      {change ? ` · ${change > 0 ? '+' : ''}${change}` : ''}
+                      {last ? `${num(last.top.w)} × ${last.top.reps}` : 'Not logged yet'}
+                      {change ? ` · ${change > 0 ? '+' : ''}${num(change)}` : ''}
                     </small>
                   </button>
-                  {open === lift.key && (
-                    <div className="detail">
-                      <Spark values={h.map((x) => Number(x.top.weight))} />
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Sets (weight × reps)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...h].reverse().map((x) => (
-                            <tr key={x.id}>
-                              <td>
-                                {niceDate(x.at)}
-                                {x.week ? ` · B${x.block} W${x.week}` : ''}
-                              </td>
-                              <td>{x.sets.map((s) => `${s.weight}×${s.reps}`).join(', ')}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  {open === key && <LiftDetail h={h} unit={unit} />}
                 </li>
               )
             })}
@@ -77,6 +62,76 @@ export default function Progress({ v }) {
         </div>
       ))}
     </section>
+  )
+}
+
+function LiftDetail({ h, unit }) {
+  const pr = records(h)
+  return (
+    <div className="detail">
+      <Spark values={h.map((x) => x.top.w)} />
+
+      <h4 className="subhead">Personal records</h4>
+      <div className="prs">
+        <div>
+          <small>Heaviest set</small>
+          <strong>
+            {num(pr.heaviest.w)} {unit} × {pr.heaviest.reps}
+          </strong>
+          <small>{niceDate(pr.heaviest.at)}</small>
+        </div>
+        <div>
+          <small>Highest volume session</small>
+          <strong>
+            {num(pr.volume.volume)} {unit}
+          </strong>
+          <small>{niceDate(pr.volume.at)}</small>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Weight</th>
+            <th>Most reps</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pr.repsAtWeight.slice(0, 6).map((r) => (
+            <tr key={r.w}>
+              <td>
+                {num(r.w)} {unit}
+              </td>
+              <td>{r.reps}</td>
+              <td>{niceDate(r.at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {pr.repsAtWeight.length > 6 && <p className="muted small">Showing the six heaviest weights.</p>}
+
+      <h4 className="subhead">History</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Best set</th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...h].reverse().map((x) => (
+            <tr key={x.id}>
+              <td>{niceDate(x.at)}</td>
+              <td>
+                {num(x.top.w)} × {x.top.reps}
+              </td>
+              <td>{num(x.volume)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -93,7 +148,7 @@ function Spark({ values }) {
     H - pad - ((val - min) / span) * (H - 2 * pad),
   ])
   return (
-    <svg className="spark" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Heaviest set from ${values[0]} to ${values[values.length - 1]}`}>
+    <svg className="spark" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Best set from ${values[0]} to ${values[values.length - 1]}`}>
       <polyline points={pts.map((p) => p.join(',')).join(' ')} fill="none" stroke="currentColor" strokeWidth="2" />
       {pts.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r="3" fill="currentColor" />
