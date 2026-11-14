@@ -202,6 +202,12 @@ function onSession(session) {
 }
 
 export async function signOut() {
+  try {
+    const { disablePush } = await import('./push')
+    await disablePush()
+  } catch {
+    /* reminders were not on, or the phone is offline */
+  }
   await supabase.auth.signOut()
   commit(blank())
 }

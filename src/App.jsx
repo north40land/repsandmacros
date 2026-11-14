@@ -24,7 +24,7 @@ const TABS = [
 export default function App() {
   const snap = useDB()
   const { db, session, ready, status } = snap
-  const [tab, setTab] = useState('today')
+  const [tab, setTab] = useState(() => (new URLSearchParams(location.search).get('tab') === 'doses' ? 'doses' : 'today'))
   const [firstScreen, setFirstScreen] = useState(null)
   const v = view(db)
   const waiting = Object.keys(db.pending).length
@@ -36,6 +36,14 @@ export default function App() {
     const ops = missedOps(v)
     if (ops.length) write(ops)
   }, [loaded, v])
+
+  // A tapped reminder asks the already-open app to show the Doses tab.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    const onMessage = (e) => e.data?.type === 'open' && e.data.tab === 'doses' && setTab('doses')
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [])
 
   const today = localDate()
   const doseAlert =

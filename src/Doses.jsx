@@ -4,6 +4,7 @@ import { localDate, fromLocalDate, niceDate } from './logic'
 import { addDays, mondayOf } from './calc'
 import { DAYS, dueOn, scheduledOn, dueToday, missedOn, logKey, hhmm, niceTime, niceClock } from './dosing'
 import { askConfirm } from './confirm'
+import Reminders from './Reminders'
 
 const amount = (n, unit) => `${Number(n).toLocaleString(undefined, { maximumFractionDigits: 3 })} ${unit}`
 const schedule = (item) =>
@@ -122,6 +123,8 @@ export default function Doses({ v }) {
           History
         </button>
       )}
+
+      {v.doseItems.length > 0 && <Reminders v={v} />}
     </section>
   )
 }

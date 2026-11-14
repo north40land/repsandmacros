@@ -39,7 +39,7 @@ export function view(db) {
     hasProfile: Boolean(stored),
     // null means "not following a program". Profiles from before this setting existed count as following.
     hasProgram: Boolean(stored) && stored.program_id !== null,
-    profile: { display_name: '', default_unit: 'lb', rest_seconds: 60, program_block: 1, ...stored, id: db.uid },
+    profile: { display_name: '', default_unit: 'lb', rest_seconds: 60, program_block: 1, reminder_time: '08:00', reminder_followup: true, ...stored, id: db.uid },
     workouts: mine('workouts').sort((a, b) => time(b.performed_at) - time(a.performed_at)),
     exercises: groupBy(mine('workout_exercises').sort((a, b) => a.order_index - b.order_index), 'workout_id'),
     sets: groupBy(mine('workout_sets').sort((a, b) => a.set_number - b.set_number), 'exercise_id'),
