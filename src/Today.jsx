@@ -1,49 +1,30 @@
-import { useState } from 'react'
-import { PARTS } from './program'
+import { useEffect, useState } from 'react'
+import { PARTS, programById } from './program'
 import { write, uuid, nowISO } from './db'
-import { BODY_PARTS, currentWeek, weekInfo, bookFor, niceDate, localDate, fromLocalDate } from './logic'
+import PhasePicker from './ProgramPicker'
+import { BODY_PARTS, currentWeek, weekInfo, bookFor, blockForBook, niceDate, localDate, fromLocalDate } from './logic'
 import Session from './Session'
 import PresetEditor from './PresetEditor'
+import Library from './Library'
 
-export default function Today({ v, goMaxes }) {
-  const [screen, setScreen] = useState(null)
+export default function Today({ v, goMaxes, firstScreen, clearFirstScreen }) {
+  const [screen, setScreen] = useState(firstScreen || null)
+  // The screen requested at sign-up is shown once, not every time this tab reopens.
+  useEffect(() => {
+    if (firstScreen) clearFirstScreen()
+  }, [firstScreen, clearFirstScreen])
   const openSession = (id) => setScreen({ type: 'session', id })
+  const close = () => setScreen(null)
 
   if (screen?.type === 'session' && v.workouts.some((w) => w.id === screen.id)) {
-    return <Session v={v} id={screen.id} onClose={() => setScreen(null)} />
+    return <Session v={v} id={screen.id} onClose={close} />
   }
-  if (screen?.type === 'new') return <NewWorkout onCancel={() => setScreen(null)} onStart={openSession} />
-  if (screen?.type === 'preset') return <PresetEditor v={v} id={screen.id} onClose={() => setScreen(null)} />
+  if (screen?.type === 'new') return <NewWorkout onCancel={close} onStart={openSession} />
+  if (screen?.type === 'preset') return <PresetEditor v={v} id={screen.id} onClose={close} />
+  if (screen?.type === 'library') return <Library v={v} openId={screen.openId} onClose={close} />
 
-  const week = currentWeek(v)
-  const block = v.profile.program_block
   const inProgress = v.workouts.find((w) => !w.finished_at)
   const recent = v.workouts.slice(0, 8)
-
-  const startProgramDay = (part) => {
-    const id = uuid()
-    write([
-      [
-        'workouts',
-        {
-          id,
-          name: `${part.name} day`,
-          performed_at: nowISO(),
-          body_parts: [part.id],
-          source: 'program',
-          program_block: block,
-          program_week: week,
-          finished_at: null,
-          extras: { cardio: { type: '', note: '' }, queenax: [] },
-        },
-      ],
-      ...part.exercises.map((ex, i) => [
-        'workout_exercises',
-        { id: uuid(), workout_id: id, name: ex.name, order_index: i, exercise_key: ex.id },
-      ]),
-    ])
-    openSession(id)
-  }
 
   const startPreset = (preset) => {
     const id = uuid()
@@ -83,18 +64,15 @@ export default function Today({ v, goMaxes }) {
     openSession(id)
   }
 
-  const book = bookFor(block)
-  const nextBook = bookFor(block + 1)
-  const info = week <= 4 ? weekInfo(block, week) : null
-  const doneThisWeek = (partId) =>
-    v.workouts.find(
-      (w) =>
-        w.source === 'program' &&
-        w.program_block === block &&
-        w.program_week === week &&
-        w.body_parts[0] === partId &&
-        w.finished_at,
-    )
+  const newWorkoutButton = (
+    <button
+      className={v.hasProgram ? 'secondary' : 'primary'}
+      disabled={Boolean(inProgress)}
+      onClick={() => setScreen({ type: 'new' })}
+    >
+      {v.hasProgram ? 'New workout' : 'Log a workout'}
+    </button>
+  )
 
   return (
     <section>
@@ -113,47 +91,16 @@ export default function Today({ v, goMaxes }) {
         </button>
       )}
 
-      <h3>Program · Phase {book.id} of 3</h3>
-      {info ? (
-        <>
-          <p className="muted small">
-            {book.name} · Week {week} of 4 · {info.sets} sets × {info.reps} reps at {Math.round(info.pct * 100)}% of
-            one-rep max
-          </p>
-          <div className="parts">
-            {PARTS.map((p) => {
-              const done = doneThisWeek(p.id)
-              return (
-                <button
-                  key={p.id}
-                  className={done ? 'part done' : 'part'}
-                  disabled={!done && Boolean(inProgress)}
-                  onClick={() => (done ? openSession(done.id) : startProgramDay(p))}
-                >
-                  <strong>{p.name}</strong>
-                  <small>{done ? `Done ${niceDate(done.performed_at)}` : `${p.exercises.length} exercises`}</small>
-                </button>
-              )
-            })}
-          </div>
-        </>
+      {v.hasProgram ? (
+        <ProgramCard
+          v={v}
+          inProgress={inProgress}
+          openSession={openSession}
+          goMaxes={goMaxes}
+          openDetails={() => setScreen({ type: 'library', openId: programById(v.profile.program_id).id })}
+        />
       ) : (
-        <div className="card center">
-          <h4>{book.name} complete</h4>
-          <p className="muted">
-            All four weeks are logged. Next is phase {nextBook.id}, {nextBook.name}. Update your one-rep maxes before you
-            start.
-          </p>
-          <button
-            className="primary"
-            onClick={() => {
-              write([['profiles', { id: v.uid, program_block: block + 1 }]])
-              goMaxes()
-            }}
-          >
-            Start {nextBook.name}
-          </button>
-        </div>
+        newWorkoutButton
       )}
 
       <h3>My workouts</h3>
@@ -174,12 +121,25 @@ export default function Today({ v, goMaxes }) {
           ))}
         </ul>
       ) : (
-        <p className="muted small">No saved workouts yet. Log a new workout and switch on "Save as preset" when you finish.</p>
+        <p className="muted small">
+          No saved workouts yet. Log a workout and switch on "Save as preset" when you finish to reuse it.
+        </p>
       )}
-      <button className="secondary" disabled={Boolean(inProgress)} onClick={() => setScreen({ type: 'new' })}>
-        New workout
-      </button>
+      {v.hasProgram && newWorkoutButton}
       {inProgress && <p className="muted small">Finish the workout in progress before starting another.</p>}
+
+      {!v.hasProgram && (
+        <>
+          <h3>Programs</h3>
+          <button className="card libcard" onClick={() => setScreen({ type: 'library' })}>
+            <span className="programhead">
+              <strong>Follow a program</strong>
+            </span>
+            <span className="phasenote">Let a plan set your sessions and work out your weights.</span>
+            <span className="go">Browse programs ›</span>
+          </button>
+        </>
+      )}
 
       <h3>Recent</h3>
       {recent.length ? (
@@ -190,7 +150,7 @@ export default function Today({ v, goMaxes }) {
                 <span>{w.name}</span>
                 <small>
                   {niceDate(w.performed_at)}
-                  {w.source === 'program' ? ` · B${w.program_block} W${w.program_week}` : ''}
+                  {w.source === 'program' ? ` · ${bookFor(w.program_block).name} W${w.program_week}` : ''}
                   {w.finished_at ? '' : ' · in progress'}
                 </small>
               </button>
@@ -201,6 +161,112 @@ export default function Today({ v, goMaxes }) {
         <p className="muted small">Nothing logged yet.</p>
       )}
     </section>
+  )
+}
+
+// "Your program": where you are in the plan and this week's sessions.
+function ProgramCard({ v, inProgress, openSession, goMaxes, openDetails }) {
+  const program = programById(v.profile.program_id)
+  const block = v.profile.program_block
+  const week = currentWeek(v)
+  const book = bookFor(block)
+  const info = week <= 4 ? weekInfo(block, week) : null
+  const maxCount = Object.values(v.maxes).filter((m) => m.value).length
+
+  const doneThisWeek = (partId) =>
+    v.workouts.find(
+      (w) =>
+        w.source === 'program' &&
+        w.program_block === block &&
+        w.program_week === week &&
+        w.body_parts[0] === partId &&
+        w.finished_at,
+    )
+  const doneCount = PARTS.filter((p) => doneThisWeek(p.id)).length
+
+  const startDay = (part) => {
+    const id = uuid()
+    write([
+      [
+        'workouts',
+        {
+          id,
+          name: `${part.name} day`,
+          performed_at: nowISO(),
+          body_parts: [part.id],
+          source: 'program',
+          program_block: block,
+          program_week: week,
+          finished_at: null,
+          extras: { cardio: { type: '', note: '' }, queenax: [] },
+        },
+      ],
+      ...part.exercises.map((ex, i) => [
+        'workout_exercises',
+        { id: uuid(), workout_id: id, name: ex.name, order_index: i, exercise_key: ex.id },
+      ]),
+    ])
+    openSession(id)
+  }
+
+  return (
+    <>
+      <div className="h3row">
+        <h3>Your program</h3>
+        <button className="link" onClick={openDetails}>
+          Details
+        </button>
+      </div>
+      <div className="card programcard">
+        <strong>{program.name}</strong>
+        {info ? (
+          <>
+            <p className="muted small">
+              Phase {book.id}, {book.name} · Week {week} of 4 · {doneCount} of 6 sessions done
+            </p>
+            <p className="rx">
+              {info.sets} sets × {info.reps} reps at {Math.round(info.pct * 100)}% of one-rep max
+            </p>
+            {maxCount === 0 && (
+              <button className="link" onClick={goMaxes}>
+                Enter your one-rep maxes to get target weights ›
+              </button>
+            )}
+            <div className="parts">
+              {PARTS.map((p) => {
+                const done = doneThisWeek(p.id)
+                return (
+                  <button
+                    key={p.id}
+                    className={done ? 'part done' : 'part'}
+                    disabled={!done && Boolean(inProgress)}
+                    onClick={() => (done ? openSession(done.id) : startDay(p))}
+                  >
+                    <strong>{p.name}</strong>
+                    <small>{done ? `Done ${niceDate(done.performed_at)}` : `${p.exercises.length} exercises`}</small>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="muted">
+              Phase {book.id}, {book.name}, is complete. Pick what to run next, then update your one-rep maxes before you
+              start.
+            </p>
+            <PhasePicker
+              suggested={bookFor(block + 1).id}
+              notes={program.phaseNotes}
+              onPick={(bookId) => {
+                write([['profiles', { id: v.uid, program_block: blockForBook(v, bookId) }]])
+                goMaxes()
+              }}
+            />
+          </>
+        )}
+      </div>
+    </>
   )
 }
 

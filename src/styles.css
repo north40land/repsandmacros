@@ -563,3 +563,143 @@ label select {
 .list + .secondary {
   margin-top: 10px;
 }
+
+/* program picker */
+.h3row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.h3row .link {
+  min-height: 0;
+  padding: 0;
+  font-size: 14px;
+}
+.programs {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 12px;
+  text-align: left;
+}
+.program {
+  padding: 14px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.program.picked {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.program:disabled {
+  opacity: 0.6;
+}
+.programhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.programhead strong {
+  font-size: 17px;
+}
+.programhead em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+section > .programs .program {
+  background: var(--card);
+}
+
+/* in-app confirmation sheet */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+.sheet {
+  width: 100%;
+  max-width: 528px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px 16px 16px;
+}
+.sheet p {
+  font-size: 17px;
+  margin: 0 4px 12px;
+}
+.primary.destructive {
+  background: var(--danger);
+  color: #2a0d08;
+}
+
+/* program library and "Your program" card */
+.phasenote {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.libcard {
+  cursor: pointer;
+}
+.libcard .go {
+  display: block;
+  margin-top: 10px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.programcard > strong {
+  font-size: 19px;
+}
+.programcard .rx {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 2px 0 12px;
+}
+.programcard .parts .part {
+  background: var(--bg);
+}
+.programcard .parts .part.done {
+  background: var(--done);
+}
+.programcard .program {
+  background: var(--bg);
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.facts span,
+.chips.static span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 14px;
+}
+.facts span {
+  background: var(--card);
+}
+.detailpage h3 {
+  margin-top: 20px;
+}
+.primary .sub {
+  display: block;
+  font-weight: 500;
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.75;
+}
+.danger:disabled {
+  opacity: 0.4;
+}

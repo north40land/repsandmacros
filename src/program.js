@@ -200,3 +200,27 @@ export const extrasFor = (bookId) =>
         { title: 'Group C', items: GROUP_C },
         { title: 'Other activities', items: UNLISTED },
       ]
+
+// The program library. One entry for now; the three "books" are its phases.
+// Adding a program here is all the app needs to list it.
+export const PROGRAMS = [
+  {
+    id: 'periodization-12',
+    name: '12-Week Periodized Plan',
+    goal: 'Build muscle first, then turn it into strength.',
+    length: '12 weeks',
+    frequency: '6 sessions a week',
+    level: 'Best with some barbell experience',
+    description:
+      'Three 4-week phases that move from high reps at lighter weights to low reps at heavy weights. Each week you train six body parts, one per session, on whatever days suit you. Target weights are worked out from your one-rep max for each lift, so they fit you.',
+    equipment: ['Barbell and rack', 'Dumbbells', 'Cable machine', 'EZ bar', 'Trap bar', 'Landmine', 'Leg press'],
+    needs: 'A one-rep max for each lift. Enter the ones you know; the app estimates the rest from your first session.',
+    phaseNotes: {
+      1: 'High reps at 55 to 70% to build muscle and work capacity.',
+      2: 'Moderate reps at 75 to 90% as the weight climbs.',
+      3: 'Low reps at 85 to 100% to peak strength.',
+    },
+  },
+]
+
+export const programById = (id) => PROGRAMS.find((p) => p.id === id) || PROGRAMS[0]

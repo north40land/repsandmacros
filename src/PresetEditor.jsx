@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { write, nowISO } from './db'
+import { askConfirm } from './confirm'
 import { PartChips } from './Today'
 
 // Edit a saved workout: name, body parts, and each exercise's default sets.
@@ -45,8 +46,9 @@ export default function PresetEditor({ v, id, onClose }) {
     onClose()
   }
 
-  const remove = () => {
-    if (!confirm(`Delete the saved workout "${preset.name}"? Workouts you already logged with it are kept.`)) return
+  const remove = async () => {
+    const text = `Delete the saved workout "${preset.name}"? Workouts you already logged with it are kept.`
+    if (!(await askConfirm(text, { ok: 'Delete', danger: true }))) return
     write([['user_presets', { id, deleted_at: nowISO() }]])
     onClose()
   }

@@ -3,6 +3,7 @@ import { supabase } from './supa'
 import { useDB, write, sync } from './db'
 import { view } from './logic'
 import Auth from './Auth'
+import { ConfirmHost } from './confirm'
 import Today from './Today'
 import Progress from './Progress'
 import Maxes from './Maxes'
@@ -19,6 +20,7 @@ export default function App() {
   const snap = useDB()
   const { db, session, ready, status } = snap
   const [tab, setTab] = useState('today')
+  const [firstScreen, setFirstScreen] = useState(null)
   const v = view(db)
   const waiting = Object.keys(db.pending).length
 
@@ -27,7 +29,15 @@ export default function App() {
   if (supabase && db.pulledFor !== db.uid) {
     return <Splash text={status === 'error' ? 'Could not reach the cloud.' : 'Getting your data'} retry={status === 'error'} />
   }
-  if (!v.hasProfile) return <Welcome uid={db.uid} suggested={session?.user?.user_metadata?.display_name || ''} />
+  if (!v.hasProfile) {
+    return (
+      <Welcome
+        uid={db.uid}
+        suggested={session?.user?.user_metadata?.display_name || ''}
+        onDone={(browse) => setFirstScreen(browse ? { type: 'library' } : null)}
+      />
+    )
+  }
 
   return (
     <div className="app">
@@ -39,11 +49,13 @@ export default function App() {
       )}
 
       <main>
-        {tab === 'today' && <Today v={v} goMaxes={() => setTab('maxes')} />}
+        {tab === 'today' && <Today v={v} goMaxes={() => setTab('maxes')} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
         {tab === 'progress' && <Progress v={v} />}
         {tab === 'maxes' && <Maxes v={v} />}
         {tab === 'settings' && <Settings v={v} snap={snap} />}
       </main>
+
+      <ConfirmHost />
 
       <nav className="tabs">
         {TABS.map(([id, name]) => (
@@ -72,8 +84,14 @@ function Splash({ text, retry }) {
   )
 }
 
-function Welcome({ uid, suggested }) {
+function Welcome({ uid, suggested, onDone }) {
   const [name, setName] = useState(suggested)
+  // Everyone starts with no program; "Browse programs" opens the library straight away.
+  const create = (browse) => {
+    if (!name.trim()) return
+    write([['profiles', { id: uid, display_name: name.trim(), program_id: null }]])
+    onDone(browse)
+  }
   return (
     <div className="app onboarding">
       <h1>Workout</h1>
@@ -82,16 +100,22 @@ function Welcome({ uid, suggested }) {
         className="card"
         onSubmit={(e) => {
           e.preventDefault()
-          if (name.trim()) write([['profiles', { id: uid, display_name: name.trim() }]])
+          create(true)
         }}
       >
         <label>
           Your name
           <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
         </label>
+        <p className="fieldname">How do you want to train?</p>
         <button className="primary" disabled={!name.trim()}>
-          Start
+          Follow a program
+          <small className="sub">Browse plans that set your sessions and weights</small>
         </button>
+        <button type="button" className="secondary" disabled={!name.trim()} onClick={() => create(false)}>
+          Log my own workouts
+        </button>
+        <p className="muted small">You can start or stop a program at any time.</p>
       </form>
     </div>
   )

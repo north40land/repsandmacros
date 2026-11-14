@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CARDIO, extrasFor } from './program'
 import { write, uuid, nowISO } from './db'
+import { askConfirm } from './confirm'
 import { BODY_PARTS, bookFor, weekInfo, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
 
 // A number box that lets you type freely (including "12.") and saves each valid value.
@@ -93,8 +94,8 @@ export default function Session({ v, id, onClose }) {
     setNewName('')
   }
 
-  const removeExercise = (ex) => {
-    if (!confirm(`Remove ${ex.name} and its sets?`)) return
+  const removeExercise = async (ex) => {
+    if (!(await askConfirm(`Remove ${ex.name} and its sets?`, { ok: 'Remove', danger: true }))) return
     const at = nowISO()
     write([
       ['workout_exercises', { id: ex.id, deleted_at: at }],
@@ -127,8 +128,8 @@ export default function Session({ v, id, onClose }) {
     onClose()
   }
 
-  const discard = () => {
-    if (!confirm(`Delete "${w.name}" and everything logged in it?`)) return
+  const discard = async () => {
+    if (!(await askConfirm(`Delete "${w.name}" and everything logged in it?`, { ok: 'Delete', danger: true }))) return
     const at = nowISO()
     const ops = [['workouts', { id: w.id, deleted_at: at }]]
     for (const ex of exercises) {

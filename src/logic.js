@@ -37,6 +37,8 @@ export function view(db) {
   const v = {
     uid: db.uid,
     hasProfile: Boolean(stored),
+    // null means "not following a program". Profiles from before this setting existed count as following.
+    hasProgram: Boolean(stored) && stored.program_id !== null,
     profile: { display_name: '', default_unit: 'lb', rest_seconds: 60, program_block: 1, ...stored, id: db.uid },
     workouts: mine('workouts').sort((a, b) => time(b.performed_at) - time(a.performed_at)),
     exercises: groupBy(mine('workout_exercises').sort((a, b) => a.order_index - b.order_index), 'workout_id'),
@@ -61,6 +63,16 @@ export function currentWeek(v) {
     if (done.size < PARTS.length) return w
   }
   return 5
+}
+
+// The block number to use when starting a chosen program: always a fresh block,
+// so the program begins at week 1 and earlier blocks keep their history.
+export function blockForBook(v, bookId) {
+  const used = Math.max(0, ...v.workouts.map((w) => w.program_block || 0))
+  if (!used) return bookId // nothing logged yet: blocks 1, 2 and 3 are the phases themselves
+  let block = Math.max(v.profile.program_block, used) + 1
+  while (bookFor(block).id !== bookId) block += 1
+  return block
 }
 
 // Target weight for a program lift: 1RM x the week's percentage, rounded up to 5 lb.

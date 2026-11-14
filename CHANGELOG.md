@@ -1,5 +1,22 @@
 # Changelog
 
+## Optional programs and program library (2026-11-13)
+
+- Following a program is now optional. Without one, the home screen leads with "Log a workout" and a "Follow a program" card.
+- New program library: a card per program, opening a detail page (what it does, what you need, phases, exercises) with "Start this program".
+- The three books are now the three phases of one program, "12-Week Periodized Plan". You can start at any phase, switch phase, or stop following it; history is kept.
+- Home shows a "Your program" card with phase, week and sessions done this week.
+- Sign-up asks "Follow a program" or "Log my own workouts" in place of forcing a program.
+- Confirmation prompts are now drawn by the app; the browser's own pop-up was silently blocked in some browsers.
+- Migration: `supabase/migrations/0002_optional_program.sql` (adds `profiles.program_id`). Applied to the live database on 2026-11-13.
+
+## Program picker (2026-11-13)
+
+- New accounts choose which program to start with (Hypertrophy, Hypertrophy and Strength, or Strength).
+- "Change program" on the home screen switches at any time; the chosen program starts at week 1 and earlier history is kept.
+- When a program's four weeks are done, the home screen offers all three programs, with the next one in the plan marked.
+- Replaces the phase selector that was in Settings.
+
 ## Program: Books 2 and 3 (2026-11-13)
 
 - The program is now the full 12-week plan from the "2024 Periodization with Mods" workbook: Hypertrophy, then Hypertrophy and Strength, then Strength. Four weeks each, same 38 lifts.

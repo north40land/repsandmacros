@@ -17,6 +17,21 @@ export default function Maxes({ v }) {
     }
   }
 
+  if (!v.hasProgram) {
+    return (
+      <section>
+        <div className="weekhead">
+          <p className="eyebrow">One-rep maxes</p>
+          <h2>No program yet</h2>
+          <p className="muted">
+            Maxes are used by programs to work out your target weights. Start a program from the Today tab and its lifts
+            will be listed here.
+          </p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section>
       <div className="weekhead">
