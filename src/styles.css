@@ -739,3 +739,122 @@ section > .programs .program {
   font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
+
+/* phase 3: nutrition */
+.tabs button {
+  font-size: 12px;
+}
+.datenav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.datenav button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 22px;
+}
+.datenav button:disabled {
+  opacity: 0.35;
+}
+.datenav h2 {
+  flex: 1;
+  text-align: center;
+  font-size: 24px;
+}
+.totals .bar {
+  margin-bottom: 12px;
+}
+.barline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  margin: 0 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.barline span:first-child {
+  font-weight: 600;
+}
+.barline span:last-child {
+  color: var(--muted);
+  text-align: right;
+}
+.track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.track > div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.track.over > div {
+  background: var(--danger);
+}
+.h3row small {
+  display: inline;
+}
+.addfood {
+  margin: 8px 0 0;
+  min-height: 44px;
+}
+small.left {
+  text-align: left !important;
+}
+.list li > button > span {
+  min-width: 0;
+}
+.list.foods {
+  margin: 12px 0;
+}
+.list.foods li > button {
+  min-height: 60px;
+}
+.star {
+  font-size: 22px;
+  min-width: 52px;
+}
+.seg.four button {
+  font-size: 13px;
+  padding: 0 4px;
+}
+.searchbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+.searchbar .primary {
+  width: auto;
+  min-height: 46px;
+  margin: 0;
+  padding: 0 18px;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.macrogrid,
+.targetgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8px;
+}
+.macrogrid label:first-child {
+  grid-column: 1 / -1;
+}
+input.readonly {
+  background: transparent;
+  border-style: dashed;
+}
+section > .toggle {
+  margin: 4px 0 8px;
+}

@@ -21,6 +21,9 @@ export const TABLES = [
   { name: 'workout_exercises', pk: ['id'] },
   { name: 'workout_sets', pk: ['id'] },
   { name: 'one_rep_maxes', pk: ['user_id', 'exercise_key'] },
+  { name: 'foods', pk: ['id'] },
+  { name: 'food_logs', pk: ['id'] },
+  { name: 'user_targets', pk: ['id'] },
 ]
 
 const pkOf = (table) => TABLES.find((t) => t.name === table).pk

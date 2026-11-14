@@ -1,5 +1,24 @@
 # Changelog
 
+## Phase 3, part 1: Nutrition log (2026-11-13)
+
+Tested in local-only mode and against the live database on a computer. Not yet confirmed on a phone.
+
+- New Food tab: a day view with breakfast, lunch, dinner and snacks, and arrows to move between days (not into the future).
+- Food search from USDA FoodData Central through the `food-search` edge function, whole foods listed before packaged products. Pick a result, enter an amount in servings, grams or ounces, and the numbers fill in. Any number can be edited by hand.
+- Create your own foods with per-serving numbers; edit and delete them under "My foods".
+- Recent and Favorites lists for fast entry.
+- Daily totals for calories, protein, carbs, fat and fiber, with progress bars and the amount left against targets.
+- Daily targets (calories, protein, carbs, fat, water, sleep), with optional separate rest-day targets. A day counts as a training day when a workout is logged on it. Each change is dated so past days keep their targets.
+- Logged entries store their own numbers, so editing a food later does not rewrite history.
+- Migration: `supabase/migrations/0003_nutrition.sql` (foods, food_logs, user_targets, food_cache). Applied to the live database on 2026-11-13.
+- Edge function: `supabase/functions/food-search`. Deployed on 2026-11-13 with "Verify JWT with legacy secret" off; the function checks the sign-in itself.
+- The USDA key is read from the Supabase secret `USDA_API_KEY`. Until it is set, the function uses USDA's public DEMO_KEY, which allows only a few dozen lookups per hour.
+
+Differences from the spec: `foods.user_id` is never null (public results are cached server-side and copied into a person's own foods on first use), and `user_targets` already carries the Phase 3b history columns.
+
+Still to do in Phase 3: recipes (combine foods into a per-serving food) and barcode scanning with the `food-barcode` function.
+
 ## Phase 2: Progressive overload display (2026-11-13)
 
 Tested in local-only mode on a computer. Not yet confirmed on a phone.

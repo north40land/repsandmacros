@@ -45,6 +45,9 @@ export function view(db) {
     sets: groupBy(mine('workout_sets').sort((a, b) => a.set_number - b.set_number), 'exercise_id'),
     presets: mine('user_presets').sort((a, b) => a.name.localeCompare(b.name)),
     maxes: Object.fromEntries(mine('one_rep_maxes').map((r) => [r.exercise_key, r])),
+    foods: mine('foods'),
+    foodLogs: groupBy(mine('food_logs'), 'logged_on'),
+    targets: mine('user_targets'),
   }
   cache.set(db, v)
   return v

@@ -5,12 +5,14 @@ import { view } from './logic'
 import Auth from './Auth'
 import { ConfirmHost } from './confirm'
 import Today from './Today'
+import Food from './Food'
 import Progress from './Progress'
 import Maxes from './Maxes'
 import Settings from './Settings'
 
 const TABS = [
   ['today', 'Today'],
+  ['food', 'Food'],
   ['progress', 'Progress'],
   ['maxes', 'Maxes'],
   ['settings', 'Settings'],
@@ -50,6 +52,7 @@ export default function App() {
 
       <main>
         {tab === 'today' && <Today v={v} goMaxes={() => setTab('maxes')} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
+        {tab === 'food' && <Food v={v} />}
         {tab === 'progress' && <Progress v={v} />}
         {tab === 'maxes' && <Maxes v={v} />}
         {tab === 'settings' && <Settings v={v} snap={snap} />}
