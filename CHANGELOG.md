@@ -1,5 +1,20 @@
 # Changelog
 
+## Phase 3b: Target calculator and weekly adherence (2026-11-13)
+
+Tested in local-only mode on a computer, plus one write to the live database. Not yet confirmed on a phone.
+
+- Target calculator (Food tab, Edit targets, Calculate my targets): sex, date of birth, height, current weight, activity level, goal (cut, maintain, build) with an adjustable daily deficit or surplus.
+- Macro split in two modes: protein first (grams per pound, fat as a share of calories, carbs fill the rest; the default) or percentages that must total 100.
+- Optional separate split and calorie adjustment for rest days.
+- The full chain is shown: BMR by Mifflin-St Jeor, maintenance, target calories, grams. Any final number can be typed over; overrides are kept when targets recalculate.
+- Saving records the weight as today's weigh-in and writes dated targets, so past days keep the targets they had. Typing targets in by hand on the manual page turns automatic updates off.
+- A caution appears when the calorie target is very low (under 1,200 for women, 1,500 for men).
+- Weekly adherence (Food tab, See the week): a Monday to Sunday strip coloured by whether each day was within tolerance, the average percent of target for calories, protein, carbs and fat, days within tolerance, and a day by day table. Tolerances default to 5% of calories and 10 g of protein and can be changed.
+- Migration: `supabase/migrations/0005_calculator.sql` (user_profile_metrics, body_metrics). Applied to the live database on 2026-11-13.
+
+Notes: `body_metrics` is the Phase 5 table, created early so the calculator has somewhere to record weight. Targets recalculate when the calculator is saved with a new weight; Phase 5's weigh-in screen will trigger the same recalculation. Beyond the spec, user_profile_metrics also stores the rest-day split, overrides, the automatic flag and the tolerances.
+
 ## Camera barcode scanning on iPhone (2026-11-13)
 
 Decoding tested on a computer with generated barcode images. Not tested with a real camera on any device.

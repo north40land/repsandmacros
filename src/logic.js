@@ -48,6 +48,8 @@ export function view(db) {
     foods: mine('foods'),
     foodLogs: groupBy(mine('food_logs'), 'logged_on'),
     targets: mine('user_targets'),
+    metrics: mine('user_profile_metrics')[0] || null,
+    bodyMetrics: mine('body_metrics').sort((a, b) => a.measured_on.localeCompare(b.measured_on)),
   }
   cache.set(db, v)
   return v

@@ -17,7 +17,7 @@ const ok = (form) => FIELDS.every(([k]) => form[k] === '' || Number(form[k]) >= 
 const toRow = (form) => Object.fromEntries(FIELDS.map(([k]) => [k, form[k] === '' ? null : Number(form[k])]))
 
 // Daily targets. Each save is dated, so past days keep the targets they had at the time.
-export default function Targets({ v, onClose }) {
+export default function Targets({ v, onClose, onCalculator }) {
   const today = localDate()
   const [training, setTraining] = useState(() => toForm(latestTarget(v, 'training')))
   const [rest, setRest] = useState(() => toForm(latestTarget(v, 'rest')))
@@ -34,6 +34,8 @@ export default function Targets({ v, onClose }) {
     if (separate) put('rest', rest)
     // Switching rest-day targets off removes them, so every day uses the main targets again.
     else for (const t of v.targets.filter((x) => x.day_type === 'rest')) ops.push(['user_targets', { id: t.id, deleted_at: nowISO() }])
+    // Typing targets in by hand switches off the calculator's automatic updates.
+    if (v.metrics?.auto) ops.push(['user_profile_metrics', { auto: false }])
     write(ops)
     onClose()
   }
@@ -61,6 +63,16 @@ export default function Targets({ v, onClose }) {
         <h2>Daily targets</h2>
         <p className="muted">Leave a box empty if you do not want a target for it. Changes apply from today onward.</p>
       </div>
+
+      <button className="card libcard" onClick={onCalculator}>
+        <span className="programhead">
+          <strong>Calculate my targets</strong>
+          {v.metrics?.auto && v.metrics?.birth_date && <em>In use</em>}
+        </span>
+        <span className="phasenote">Work out calories and macros from your height, weight, activity and goal.</span>
+        <span className="go">Open the calculator ›</span>
+      </button>
+      {v.metrics?.auto && v.metrics?.birth_date && <p className="muted small">Saving this page by hand turns off the calculator's automatic updates.</p>}
 
       <h3>{separate ? 'Training days' : 'Every day'}</h3>
       <div className="card targetgrid">{fields(training, setTraining, separate ? 'Training day' : 'Daily')}</div>

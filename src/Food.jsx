@@ -3,14 +3,11 @@ import { write, nowISO } from './db'
 import { localDate, fromLocalDate, niceDate } from './logic'
 import { MEALS, MACROS, MACRO_LABEL, fmt, round, sum, targetFor } from './nutrition'
 import { askConfirm } from './confirm'
+import { addDays as shift } from './calc'
 import AddFood from './AddFood'
 import Targets from './Targets'
-
-const shift = (date, days) => {
-  const d = new Date(fromLocalDate(date))
-  d.setDate(d.getDate() + days)
-  return localDate(d.toISOString())
-}
+import Calculator from './Calculator'
+import Week from './Week'
 
 export default function Food({ v }) {
   const today = localDate()
@@ -19,7 +16,20 @@ export default function Food({ v }) {
   const close = () => setScreen(null)
 
   if (screen?.type === 'add') return <AddFood v={v} date={date} meal={screen.meal} onClose={close} />
-  if (screen?.type === 'targets') return <Targets v={v} onClose={close} />
+  if (screen?.type === 'targets') return <Targets v={v} onClose={close} onCalculator={() => setScreen({ type: 'calculator' })} />
+  if (screen?.type === 'calculator') return <Calculator v={v} onClose={close} />
+  if (screen?.type === 'week') {
+    return (
+      <Week
+        v={v}
+        onClose={close}
+        onPickDay={(d) => {
+          setDate(d)
+          close()
+        }}
+      />
+    )
+  }
   const editing = screen?.type === 'edit' && (v.foodLogs[date] || []).find((l) => l.id === screen.id)
   if (editing) return <EditEntry log={editing} onClose={close} />
 
@@ -40,7 +50,10 @@ export default function Food({ v }) {
             ›
           </button>
         </div>
-        {hasRest && <p className="muted small">{dayType === 'training' ? 'Training day targets' : 'Rest day targets'}</p>}
+        {hasRest && <p className="muted small center">{dayType === 'training' ? 'Training day targets' : 'Rest day targets'}</p>}
+        <button className="link weeklink" onClick={() => setScreen({ type: 'week' })}>
+          See the week ›
+        </button>
       </div>
 
       <div className="card totals">

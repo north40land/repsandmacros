@@ -24,6 +24,8 @@ export const TABLES = [
   { name: 'foods', pk: ['id'] },
   { name: 'food_logs', pk: ['id'] },
   { name: 'user_targets', pk: ['id'] },
+  { name: 'user_profile_metrics', pk: ['user_id'] },
+  { name: 'body_metrics', pk: ['id'] },
 ]
 
 const pkOf = (table) => TABLES.find((t) => t.name === table).pk

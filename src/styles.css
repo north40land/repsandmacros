@@ -874,3 +874,75 @@ section > .toggle {
 section > .secondary + .secondary {
   margin-top: 8px;
 }
+
+/* phase 3b: calculator and weekly adherence */
+.spaced {
+  margin-top: 12px;
+}
+.math .barline {
+  margin: 10px 0 0;
+  font-size: 15px;
+}
+.math .barline span:last-child {
+  color: var(--text);
+  font-weight: 600;
+}
+.problems {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.weeklink {
+  display: block;
+  margin: 2px auto 0;
+  min-height: 32px;
+  font-size: 14px;
+}
+.strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.day {
+  min-height: 64px;
+  padding: 6px 0;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.day strong {
+  font-size: 18px;
+  color: var(--text);
+  min-height: 22px;
+}
+.day.hit {
+  background: var(--done);
+  border-color: var(--done-line);
+}
+.day.miss {
+  background: #3a1f1c;
+  border-color: #7a4038;
+}
+.day.future {
+  opacity: 0.4;
+}
+.prs.four {
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 10px;
+}
+.prs.four > div {
+  padding: 8px;
+  text-align: center;
+}
+.card.two {
+  display: grid;
+}
