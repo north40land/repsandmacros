@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { supabase } from './supa'
+import { openStorage } from './storage'
 
 // Local-first data layer.
 //
@@ -8,10 +9,9 @@ import { supabase } from './supa'
 // creates a duplicate. Deletes are soft (deleted_at) so other devices hear about them.
 // The newest write wins.
 //
-// Storage is localStorage for now, which is plenty for workout data. Phase 8 moves it
-// to IndexedDB when food logs and photos make it bigger.
-
-const LS = 'wk.db.v2'
+// The phone's copy lives in IndexedDB (see storage.js). Only rows that changed are
+// written, in the same step as the list of changes still waiting to sync, so a change
+// made with no signal survives closing the app and is replayed when a connection returns.
 
 // Order matters when pushing: parents before children.
 export const TABLES = [
@@ -44,22 +44,9 @@ const blank = (uid = 'local') => ({
   cursors: {},
 })
 
-function load() {
-  try {
-    const raw = localStorage.getItem(LS)
-    if (raw) {
-      const saved = JSON.parse(raw)
-      const base = blank()
-      return { ...base, ...saved, tables: { ...base.tables, ...saved.tables } }
-    }
-  } catch {
-    /* fall through to a fresh database */
-  }
-  return blank()
-}
-
-let db = load()
-let meta = { status: supabase ? 'idle' : 'off', session: null, ready: !supabase }
+let db = blank()
+let store = null
+let meta = { status: supabase ? 'idle' : 'off', session: null, ready: false, online: navigator.onLine !== false }
 let snapshot = { db, ...meta }
 const listeners = new Set()
 
@@ -67,13 +54,25 @@ function emit() {
   snapshot = { db, ...meta }
   listeners.forEach((l) => l())
 }
-function commit(next) {
-  db = next
-  try {
-    localStorage.setItem(LS, JSON.stringify(db))
-  } catch {
-    /* storage unavailable: keep working in memory */
+// What differs between two versions of the database, as rows to write and rows to remove.
+function changes(prev, next) {
+  const puts = []
+  const dels = []
+  for (const { name } of TABLES) {
+    const before = prev.tables[name]
+    const after = next.tables[name]
+    if (before === after) continue
+    for (const key in after) if (after[key] !== before[key]) puts.push([`${name}/${key}`, after[key]])
+    for (const key in before) if (!(key in after)) dels.push(`${name}/${key}`)
   }
+  const { tables: _tables, ...state } = next
+  return { puts, dels, meta: state }
+}
+
+function commit(next) {
+  const prev = db
+  db = next
+  store?.save(changes(prev, next), next)
   emit()
 }
 function setMeta(patch) {
@@ -111,6 +110,7 @@ export function write(ops) {
 }
 
 let timer
+let retry
 let running = false
 function schedule() {
   clearTimeout(timer)
@@ -173,6 +173,9 @@ export async function sync() {
   } finally {
     running = false
     if (meta.status === 'ok' && Object.keys(db.pending).length) schedule()
+    // After a failure keep trying quietly, so queued changes go up as soon as the connection is back.
+    clearTimeout(retry)
+    if (meta.status === 'error') retry = setTimeout(sync, 30000)
   }
 }
 
@@ -215,8 +218,20 @@ export async function signOut() {
   commit(blank())
 }
 
-if (supabase) {
+// Start-up: read the phone's copy first, then find out who is signed in.
+async function boot() {
+  store = await openStorage()
+  if (store.saved) {
+    const base = blank()
+    db = { ...base, ...store.saved, tables: { ...base.tables, ...store.saved.tables } }
+  }
+  window.addEventListener('online', () => {
+    setMeta({ online: true })
+    schedule()
+  })
+  window.addEventListener('offline', () => setMeta({ online: false }))
+  if (!supabase) return setMeta({ ready: true })
   supabase.auth.onAuthStateChange((_event, session) => onSession(session))
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && schedule())
-  window.addEventListener('online', schedule)
 }
+boot()

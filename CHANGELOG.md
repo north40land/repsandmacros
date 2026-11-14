@@ -1,5 +1,18 @@
 # Changelog
 
+## Phase 8: Offline logging and sync (2026-11-13)
+
+Tested on a computer with a production build and its server switched off. Replaying queued changes to the live database after reconnecting was not re-tested here (the test preview was signed out); that path is unchanged from earlier phases, where it was tested.
+
+- The phone's copy of the data moved from localStorage to IndexedDB. Only the rows that changed are written, together with the list of changes waiting to sync. Existing data is carried across automatically the first time the new version opens.
+- The app opens with no signal, including after only one previous visit: the offline helper now saves the page and its files as soon as it starts, and falls back to the saved copy if the network does not answer within 4 seconds.
+- Changes made offline are queued on the phone and replayed when the connection returns. Rows keep their phone-made ids, so a replay never creates a duplicate; the newest write wins.
+- An "Offline" bar appears at the top with the number of changes waiting to sync. If the cloud cannot be reached while online, a bar says so and the app retries every 30 seconds. Settings shows the same status.
+- Presets, favourite foods, dose items and everything else already logged are available offline because they are part of the phone's copy.
+- Developer note: `npm run preview:local` builds and serves the production app with no cloud connection, which is how offline behaviour is tested.
+
+Still needs a connection: food search, barcode lookup, progress photos, and turning reminders on.
+
 ## Phase 7: Weekly dashboard (2026-11-13)
 
 Tested in local-only mode on a computer. Not yet confirmed on a phone.

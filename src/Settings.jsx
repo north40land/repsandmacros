@@ -10,7 +10,7 @@ const STATUS = {
 }
 
 export default function Settings({ v, snap, onClose }) {
-  const { db, session, status } = snap
+  const { db, session, status, online } = snap
   const waiting = Object.keys(db.pending).length
   const save = (patch) => write([['profiles', { id: v.uid, ...patch }]])
 
@@ -69,7 +69,7 @@ export default function Settings({ v, snap, onClose }) {
       <div className="card">
         {session && <p>{session.user.email}</p>}
         <p className="muted" role="status">
-          {STATUS[status]}
+          {supabase && !online ? 'Offline. Changes are saved on this phone and will sync when you are back online.' : STATUS[status]}
           {supabase && waiting > 0 ? ` ${waiting} waiting.` : ''}
         </p>
         {supabase && (

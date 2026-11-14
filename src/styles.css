@@ -1313,3 +1313,9 @@ ul.plain li small {
   opacity: 0.7;
   font-size: 11px;
 }
+
+/* phase 8: offline indicator */
+.statusbar.quiet {
+  background: var(--card);
+  color: var(--muted);
+}

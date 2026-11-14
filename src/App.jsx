@@ -25,7 +25,7 @@ const TABS = [
 
 export default function App() {
   const snap = useDB()
-  const { db, session, ready, status } = snap
+  const { db, session, ready, status, online } = snap
   const [tab, setTab] = useState(() => (new URLSearchParams(location.search).get('tab') === 'doses' ? 'doses' : 'home'))
   // Where a dashboard shortcut wants a tab to open: a date, a form, a view. `n` forces a fresh start.
   const [intent, setIntent] = useState({ n: 0 })
@@ -53,11 +53,19 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener('message', onMessage)
   }, [])
 
+  // Only mention changes waiting to sync if they have been waiting a few seconds.
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    if (!waiting) return setStuck(false)
+    const t = setTimeout(() => setStuck(true), 4000)
+    return () => clearTimeout(t)
+  }, [waiting > 0])
+
   const today = localDate()
   const doseAlert =
     dueToday(v, today).some((i) => !v.doseLogs[logKey(i.id, today)]) || missedOn(v, addDays(today, -1)).length > 0
 
-  if (supabase && !ready) return <Splash text="Loading" />
+  if (!ready) return <Splash text="Loading" />
   if (supabase && !session) return <Auth />
   if (supabase && db.pulledFor !== db.uid) {
     return <Splash text={status === 'error' ? 'Could not reach the cloud.' : 'Getting your data'} retry={status === 'error'} />
@@ -77,10 +85,23 @@ export default function App() {
 
   return (
     <div className="app">
-      {supabase && status === 'error' && (
+      {supabase && !online && (
         <p className="statusbar" role="status">
-          No connection to the cloud. {waiting} {waiting === 1 ? 'change is' : 'changes are'} saved on this phone and
-          will sync later.
+          <strong>Offline.</strong>{' '}
+          {waiting
+            ? `${waiting} ${waiting === 1 ? 'change is' : 'changes are'} saved on this phone and will sync when you are back online.`
+            : 'What you log is saved on this phone and will sync when you are back online.'}
+        </p>
+      )}
+      {supabase && online && status === 'error' && (
+        <p className="statusbar" role="status">
+          Cannot reach the cloud right now. {waiting} {waiting === 1 ? 'change is' : 'changes are'} saved on this phone
+          and will sync soon.
+        </p>
+      )}
+      {supabase && online && status !== 'error' && stuck && (
+        <p className="statusbar quiet" role="status">
+          Syncing {waiting} {waiting === 1 ? 'change' : 'changes'}
         </p>
       )}
 
