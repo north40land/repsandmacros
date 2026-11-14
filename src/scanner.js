@@ -22,9 +22,11 @@ export function getDetector() {
       import('barcode-detector/ponyfill'),
       import('zxing-wasm/reader/zxing_reader.wasm?url'),
     ])
-    prepareZXingModule({
-      overrides: { locateFile: (path, prefix) => (path.endsWith('.wasm') ? wasmUrl : prefix + path) },
-    })
+    // Hand the decoder over as raw bytes. Some hosts serve .wasm files with the wrong
+    // content type, which makes the browser refuse to load them by address.
+    const response = await fetch(wasmUrl)
+    if (!response.ok) throw new Error(`decoder download failed (${response.status})`)
+    prepareZXingModule({ overrides: { wasmBinary: await response.arrayBuffer() } })
     return new BarcodeDetector({ formats: FORMATS })
   })()
   // Let a failed load be retried next time the screen opens.
