@@ -1,5 +1,17 @@
 # Changelog
 
+## Restyle: light Apple-style look (2026-11-13)
+
+Checked on a computer at phone size in local-only mode: Home, Train, a logged workout, Food, Doses, Progress and Settings, plus a production build. Sign-in, add food, barcode, recipes, targets, the calculator, body, photos, the week view, the program library and the confirmation sheet were not looked at; they use the same styles.
+
+- The app is now light: grey page, white cards without outlines, and one blue for everything that can be tapped.
+- Bars, trend lines and days that hit target are black. Red is kept for warnings, missed doses, over-target bars and delete actions.
+- Section headings are larger and no longer small capitals. Body text is 17px.
+- Buttons are pills, set check buttons are round and fill blue when logged, and switches between views look like iPhone segmented controls.
+- Each tab in the bottom bar has an icon above its name.
+- The browser bar colour and the home screen manifest are light to match. A phone that already has the app on its home screen may show the old dark colour while opening until the app is added again.
+- No data, logic or database changes. The landing page is not restyled yet.
+
 ## Phase 8: Offline logging and sync (2026-11-13)
 
 Tested on a computer with a production build and its server switched off. Replaying queued changes to the live database after reconnecting was not re-tested here (the test preview was signed out); that path is unchanged from earlier phases, where it was tested.

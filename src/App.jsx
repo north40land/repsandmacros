@@ -119,12 +119,29 @@ export default function App() {
       <nav className="tabs">
         {TABS.map(([id, name]) => (
           <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
+            <TabIcon id={id} />
             {name}
             {id === 'doses' && doseAlert && <span className="dot" aria-label="something is due" />}
           </button>
         ))}
       </nav>
     </div>
+  )
+}
+
+const TAB_ICONS = {
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  today: 'M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12',
+  food: 'M7 2v20M4 2v6a3 3 0 0 0 6 0V2M17 2c-2 2-3 5-3 8h3v12',
+  doses: 'M10.5 20.5a4.95 4.95 0 0 1-7-7l9-9a4.95 4.95 0 0 1 7 7zM8.5 8.5l7 7',
+  progress: 'M22 7l-8.5 8.5-5-5L2 17M16 7h6v6',
+}
+
+function TabIcon({ id }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d={TAB_ICONS[id]} />
+    </svg>
   )
 }
 

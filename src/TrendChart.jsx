@@ -11,7 +11,7 @@ import { fromLocalDate } from './logic'
 const W = 320
 const H = 170
 const M = { top: 10, right: 12, bottom: 22, left: 38 }
-const SURFACE = '#1a2027'
+const SURFACE = '#ffffff'
 
 const day = (date) => Date.parse(fromLocalDate(date))
 const label = (date) => new Date(fromLocalDate(date)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
