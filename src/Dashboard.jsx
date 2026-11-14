@@ -10,12 +10,6 @@ const span = (start) => {
   const f = (d) => new Date(fromLocalDate(d)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   return `${f(start)} to ${f(addDays(start, 6))}`
 }
-// The meal a quick "log food" most likely belongs to, by time of day.
-const mealNow = () => {
-  const h = new Date().getHours() + new Date().getMinutes() / 60
-  return h < 10.5 ? 'breakfast' : h < 15 ? 'lunch' : h < 20.5 ? 'dinner' : 'snacks'
-}
-
 // A tiny trend line for a stat tile. The numbers it draws are listed in full on the screen it opens.
 function Spark({ values, label }) {
   if (values.filter((x) => x > 0).length < 2) return null
@@ -49,7 +43,7 @@ function Tile({ label, value, note, children, onClick }) {
   )
 }
 
-// The home screen: the whole week on one page, with quick actions pinned at the bottom.
+// The home screen: the whole week on one page.
 export default function Dashboard({ v, go }) {
   const thisWeek = mondayOf(localDate())
   const [start, setStart] = useState(thisWeek)
@@ -196,25 +190,6 @@ export default function Dashboard({ v, go }) {
         </button>
         <button className="link" onClick={exportCsv}>
           Export week (CSV)
-        </button>
-      </div>
-
-      <div className="quickbar" role="group" aria-label="Quick actions">
-        <button onClick={() => go('today')}>
-          <strong>Workout</strong>
-          <small>Log</small>
-        </button>
-        <button onClick={() => go('food', { add: mealNow() })}>
-          <strong>Food</strong>
-          <small>Log</small>
-        </button>
-        <button onClick={() => go('progress', { view: 'body', checkIn: true })}>
-          <strong>Weight</strong>
-          <small>Log</small>
-        </button>
-        <button onClick={() => go('doses')}>
-          <strong>Dose</strong>
-          <small>Log</small>
         </button>
       </div>
     </section>

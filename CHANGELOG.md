@@ -1,5 +1,9 @@
 # Changelog
 
+## Home screen: quick actions bar removed (2026-11-13)
+
+- Removed the Workout, Food, Weight and Dose buttons that sat above the tab bar on Home. The tab bar covers the same destinations, and the cards on Home still open their screens.
+
 ## Landing page (2026-11-13)
 
 Checked on a computer against the cloud-mode dev server while signed out, at desktop and phone widths, plus a production build. Phone width was confirmed by measuring the page (no sideways scrolling); it has not been looked at on a real phone.
