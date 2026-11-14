@@ -1,5 +1,14 @@
 # Changelog
 
+## Landing page (2026-11-13)
+
+Checked on a computer against the cloud-mode dev server while signed out, at desktop and phone widths, plus a production build. Phone width was confirmed by measuring the page (no sideways scrolling); it has not been looked at on a real phone.
+
+- A signed-out visitor in a browser now sees a landing page first: what the app tracks, a sample of the weekly dashboard, and how to put it on the home screen. The numbers in the previews are sample data and are labelled that way.
+- "Create account" and "Sign in" open the sign-in screen on the matching tab. That screen has a Back link to the landing page.
+- The installed app skips the landing page and opens sign-in directly. Signed-in use is unchanged.
+- New file `src/Landing.jsx`; its styles are the `.lp` rules at the end of `src/styles.css`.
+
 ## Restyle: light Apple-style look (2026-11-13)
 
 Checked on a computer at phone size in local-only mode: Home, Train, a logged workout, Food, Doses, Progress and Settings, plus a production build. Sign-in, add food, barcode, recipes, targets, the calculator, body, photos, the week view, the program library and the confirmation sheet were not looked at; they use the same styles.

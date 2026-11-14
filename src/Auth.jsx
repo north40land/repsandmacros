@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { supabase } from './supa'
 
-export default function Auth() {
-  const [mode, setMode] = useState('in')
+export default function Auth({ initialMode = 'in', onBack }) {
+  const [mode, setMode] = useState(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,6 +28,11 @@ export default function Auth() {
 
   return (
     <div className="app onboarding">
+      {onBack && (
+        <button className="back" onClick={onBack}>
+          ‹ Back
+        </button>
+      )}
       <h1>Workout</h1>
       <p className="muted">Each person signs in to their own account.</p>
 

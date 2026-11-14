@@ -3,6 +3,7 @@ import { supabase } from './supa'
 import { useDB, write, sync } from './db'
 import { view } from './logic'
 import Auth from './Auth'
+import Landing from './Landing'
 import { ConfirmHost } from './confirm'
 import Dashboard from './Dashboard'
 import Today from './Today'
@@ -66,7 +67,7 @@ export default function App() {
     dueToday(v, today).some((i) => !v.doseLogs[logKey(i.id, today)]) || missedOn(v, addDays(today, -1)).length > 0
 
   if (!ready) return <Splash text="Loading" />
-  if (supabase && !session) return <Auth />
+  if (supabase && !session) return <SignedOut />
   if (supabase && db.pulledFor !== db.uid) {
     return <Splash text={status === 'error' ? 'Could not reach the cloud.' : 'Getting your data'} retry={status === 'error'} />
   }
@@ -127,6 +128,14 @@ export default function App() {
       </nav>
     </div>
   )
+}
+
+// A visitor in a browser sees the landing page first. The installed app goes straight to sign-in.
+function SignedOut() {
+  const installed = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
+  const [mode, setMode] = useState(installed ? 'in' : null)
+  if (!mode) return <Landing onStart={setMode} />
+  return <Auth initialMode={mode} onBack={installed ? null : () => setMode(null)} />
 }
 
 const TAB_ICONS = {
