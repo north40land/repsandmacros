@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supa'
 import { useDB, write, sync } from './db'
 import { view } from './logic'
@@ -7,14 +7,17 @@ import { ConfirmHost } from './confirm'
 import Today from './Today'
 import Food from './Food'
 import Progress from './Progress'
-import Maxes from './Maxes'
+import Doses from './Doses'
+import { missedOps, dueToday, missedOn, logKey } from './dosing'
+import { localDate } from './logic'
+import { addDays } from './calc'
 import Settings from './Settings'
 
 const TABS = [
   ['today', 'Today'],
   ['food', 'Food'],
+  ['doses', 'Doses'],
   ['progress', 'Progress'],
-  ['maxes', 'Maxes'],
   ['settings', 'Settings'],
 ]
 
@@ -25,6 +28,18 @@ export default function App() {
   const [firstScreen, setFirstScreen] = useState(null)
   const v = view(db)
   const waiting = Object.keys(db.pending).length
+  const loaded = !supabase || db.pulledFor === db.uid
+
+  // Turn yesterday's unlogged doses into "missed" entries, once the latest data is in.
+  useEffect(() => {
+    if (!loaded) return
+    const ops = missedOps(v)
+    if (ops.length) write(ops)
+  }, [loaded, v])
+
+  const today = localDate()
+  const doseAlert =
+    dueToday(v, today).some((i) => !v.doseLogs[logKey(i.id, today)]) || missedOn(v, addDays(today, -1)).length > 0
 
   if (supabase && !ready) return <Splash text="Loading" />
   if (supabase && !session) return <Auth />
@@ -51,10 +66,10 @@ export default function App() {
       )}
 
       <main>
-        {tab === 'today' && <Today v={v} goMaxes={() => setTab('maxes')} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
+        {tab === 'today' && <Today v={v} firstScreen={firstScreen} clearFirstScreen={() => setFirstScreen(null)} />}
         {tab === 'food' && <Food v={v} />}
         {tab === 'progress' && <Progress v={v} />}
-        {tab === 'maxes' && <Maxes v={v} />}
+        {tab === 'doses' && <Doses v={v} />}
         {tab === 'settings' && <Settings v={v} snap={snap} />}
       </main>
 
@@ -64,6 +79,7 @@ export default function App() {
         {TABS.map(([id, name]) => (
           <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>
             {name}
+            {id === 'doses' && doseAlert && <span className="dot" aria-label="something is due" />}
           </button>
         ))}
       </nav>

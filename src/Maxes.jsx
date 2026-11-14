@@ -2,7 +2,7 @@ import { PARTS } from './program'
 import { write, nowISO } from './db'
 import { currentWeek, target, weekInfo, bookFor } from './logic'
 
-export default function Maxes({ v }) {
+export default function Maxes({ v, onClose }) {
   const week = Math.min(currentWeek(v), 4)
   const block = v.profile.program_block
   const info = weekInfo(block, week)
@@ -20,6 +20,9 @@ export default function Maxes({ v }) {
   if (!v.hasProgram) {
     return (
       <section>
+        <button className="back" onClick={onClose}>
+          ‹ Back
+        </button>
         <div className="weekhead">
           <p className="eyebrow">One-rep maxes</p>
           <h2>No program yet</h2>
@@ -34,6 +37,9 @@ export default function Maxes({ v }) {
 
   return (
     <section>
+      <button className="back" onClick={onClose}>
+        ‹ Back
+      </button>
       <div className="weekhead">
         <p className="eyebrow">{bookFor(block).name} · one-rep maxes</p>
         <h2>{entered} of 38 set</h2>

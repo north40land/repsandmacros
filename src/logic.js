@@ -49,6 +49,8 @@ export function view(db) {
     foodLogs: groupBy(mine('food_logs'), 'logged_on'),
     targets: mine('user_targets'),
     metrics: mine('user_profile_metrics')[0] || null,
+    doseItems: mine('dose_items').sort((a, b) => a.name.localeCompare(b.name)),
+    doseLogs: Object.fromEntries(mine('dose_logs').map((r) => [`${r.dose_item_id}|${r.scheduled_on}`, r])),
     bodyMetrics: mine('body_metrics').sort((a, b) => a.measured_on.localeCompare(b.measured_on)),
   }
   cache.set(db, v)

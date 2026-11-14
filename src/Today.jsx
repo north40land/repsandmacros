@@ -6,8 +6,9 @@ import { BODY_PARTS, currentWeek, weekInfo, bookFor, blockForBook, niceDate, loc
 import Session from './Session'
 import PresetEditor from './PresetEditor'
 import Library from './Library'
+import Maxes from './Maxes'
 
-export default function Today({ v, goMaxes, firstScreen, clearFirstScreen }) {
+export default function Today({ v, firstScreen, clearFirstScreen }) {
   const [screen, setScreen] = useState(firstScreen || null)
   // The screen requested at sign-up is shown once, not every time this tab reopens.
   useEffect(() => {
@@ -22,6 +23,8 @@ export default function Today({ v, goMaxes, firstScreen, clearFirstScreen }) {
   if (screen?.type === 'new') return <NewWorkout onCancel={close} onStart={openSession} />
   if (screen?.type === 'preset') return <PresetEditor v={v} id={screen.id} onClose={close} />
   if (screen?.type === 'library') return <Library v={v} openId={screen.openId} onClose={close} />
+  if (screen?.type === 'maxes') return <Maxes v={v} onClose={close} />
+  const goMaxes = () => setScreen({ type: 'maxes' })
 
   const inProgress = v.workouts.find((w) => !w.finished_at)
   const recent = v.workouts.slice(0, 8)
@@ -213,9 +216,14 @@ function ProgramCard({ v, inProgress, openSession, goMaxes, openDetails }) {
     <>
       <div className="h3row">
         <h3>Your program</h3>
-        <button className="link" onClick={openDetails}>
-          Details
-        </button>
+        <span className="links">
+          <button className="link" onClick={goMaxes}>
+            Maxes
+          </button>
+          <button className="link" onClick={openDetails}>
+            Details
+          </button>
+        </span>
       </div>
       <div className="card programcard">
         <strong>{program.name}</strong>

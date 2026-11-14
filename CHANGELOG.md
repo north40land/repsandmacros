@@ -1,5 +1,21 @@
 # Changelog
 
+## Phase 4: Scheduled dosing log (2026-11-13)
+
+Tested in local-only mode and with one save-and-delete against the live database, on a computer. Not yet confirmed on a phone.
+
+- New Doses tab. Items have a name, dose amount, unit, days of the week, optional time of day, notes and an active switch.
+- "Due today" list with a one-tap Log button that records the scheduled amount and the time. Tap the name to skip, or to enter a different amount or time.
+- Missed doses: a scheduled day that ends with nothing logged becomes a "missed" entry the next time the app opens. A red dot shows on the Doses tab and a "Missed yesterday" card appears on the screen.
+- History by week: every item against every day, marked taken, missed or skipped. Tap a mark to correct it.
+- Pausing an item stops it being due; switching it back on does not count the paused days as missed.
+- One-rep maxes moved from their own tab to a "Maxes" link on the "Your program" card, to make room for the Doses tab.
+- Migration: `supabase/migrations/0006_dosing.sql` (dose_items, dose_logs). Applied to the live database on 2026-11-13.
+
+Differences from the spec: `dose_logs` is keyed by item and day (no separate id), so two phones cannot create two entries for the same dose, and a database rule stops an automatic "missed" from replacing a real entry. `dose_items` also stores the start date and how far missed doses have been checked.
+
+Not built yet: reminder notifications. On iPhone these need the app on the Home Screen and a push service on the server.
+
 ## Phase 3b: Target calculator and weekly adherence (2026-11-13)
 
 Tested in local-only mode on a computer, plus one write to the live database. Not yet confirmed on a phone.
