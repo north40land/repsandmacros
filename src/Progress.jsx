@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PARTS } from './program'
-import { history, records, exKey, niceDate } from './logic'
+import { history, records, exKey, niceDate, everyProgramLift } from './logic'
 import Body from './Body'
 import Photos from './Photos'
 
@@ -57,7 +57,7 @@ function Lifts({ v }) {
     for (const ex of list) if (!ex.exercise_key && ex.name.trim()) others.set(exKey(ex), ex.name.trim())
   }
   const groups = [
-    ...PARTS.map((p) => ({ name: p.name, lifts: p.exercises.map((ex) => ({ key: ex.id, name: ex.name })) })),
+    ...PARTS.map((p) => ({ name: p.name, lifts: everyProgramLift(v, p.id).map((ex) => ({ key: ex.id, name: ex.name })) })),
     {
       name: 'Other exercises',
       lifts: [...others].map(([key, name]) => ({ key, name })).sort((a, b) => a.name.localeCompare(b.name)),

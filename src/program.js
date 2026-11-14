@@ -96,47 +96,9 @@ export const PARTS = [
   ]),
 ]
 
-export const CARDIO = ['Super Set', 'Queenax HIIT Circuit', 'Lift-Flow', 'Cardio Circuit', 'Other Cardio']
+export const CARDIO = ['Super Set', 'HIIT Circuit', 'Lift-Flow', 'Cardio Circuit', 'Other Cardio']
 
-export const QUEENAX = [
-  'Off Center Push-Up',
-  'Stable Bar Push-Up',
-  'SF Push-Up',
-  'Skull Crushers',
-  'Dips',
-  'Landmine Press',
-  'Pro-Row',
-  'Sup-Row',
-  'Pull-Up',
-  'Jump Pull-Up',
-  'Bi Curls',
-  'Matrix Pull',
-  'Rev. Lunge',
-  'Squat',
-  'Landmine Squat',
-  'SF Lat. Lunge',
-  'Bulg. Squat',
-  'Ham Curl',
-  'Split Squats',
-  'Jump. Squats',
-  'Pigeons',
-  'F/R Pistols',
-  'Mario Jumps',
-  'Wobble',
-  'Inv. Toe Touch',
-  'Slide Out / Hold',
-  'Side Bends',
-  'Knee Tucks',
-  'Landmine Twists',
-  '"V" Ups',
-  'Sled Push',
-  'Ball Slams',
-  'KB Swings',
-  'Lat. Box Lunge Steps',
-  'Rev. Toe Touches',
-]
-
-// Phases 2 and 3 replace the Queenax list with these add-on groups.
+// Optional add-on work that can be ticked off on any program day.
 export const GROUP_B = [
   'Cable Flies',
   'Bosu Pushups',
@@ -148,7 +110,7 @@ export const GROUP_B = [
   'BB Thrusters',
   'Goblet Squats',
   'Reverse Lunges',
-  'Queenax / TRX',
+  'TRX',
   'Wobble',
   'Inverted Toe Touches',
   'Slide Out/Hold',
@@ -191,15 +153,12 @@ export const UNLISTED = [
   'Dips',
 ]
 
-// The tick lists shown under a program day, by phase.
-export const extrasFor = (bookId) =>
-  bookId === 1
-    ? [{ title: 'Queenax', items: QUEENAX }]
-    : [
-        { title: 'Group B', items: GROUP_B },
-        { title: 'Group C', items: GROUP_C },
-        { title: 'Other activities', items: UNLISTED },
-      ]
+// The tick lists shown under a program day.
+export const ADDONS = [
+  { title: 'Group B', items: GROUP_B },
+  { title: 'Group C', items: GROUP_C },
+  { title: 'Other activities', items: UNLISTED },
+]
 
 // The program library. One entry for now; the three "books" are its phases.
 // Adding a program here is all the app needs to list it.

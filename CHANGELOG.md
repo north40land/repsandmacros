@@ -1,5 +1,14 @@
 # Changelog
 
+## Workout tweaks from real-world use (2026-11-14)
+
+Tested in local-only mode on a computer, on a program day. Not yet confirmed on a phone.
+
+- Queenax removed from the app: the Queenax add-on list is gone, "Queenax HIIT Circuit" is now "HIIT Circuit" and "Queenax / TRX" is now "TRX". Every phase shows the same add-on lists (Group B, Group C, Other activities).
+- Program days: any exercise can be removed, and new ones added by name. An added exercise gets the week's sets, reps and percentage of one-rep max like the rest, appears in Maxes, and stays on that body part's days from then on. A removed exercise stays off until it is added back from the same screen.
+- Rest timer moved to the top of every workout (program days and your own). It stays pinned while scrolling, has the rest time setting on it (off, 30 sec up to 5 min), and counts down there after each logged set. It used to appear at the bottom of the screen, where the phone keyboard could cover it.
+- Migration: `supabase/migrations/0010_program_custom.sql` (adds `profiles.program_custom`). Applied to the live database on 2026-11-14.
+
 ## Calculator in the profile, and first-time setup (2026-11-13)
 
 Tested in local-only mode on a computer, including a brand-new user in a clean copy. Not tested with a real sign-up.

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { CARDIO, extrasFor } from './program'
+import { CARDIO, ADDONS } from './program'
 import { write, uuid, nowISO } from './db'
 import { askConfirm } from './confirm'
-import { BODY_PARTS, bookFor, weekInfo, convert, tidy, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
+import { BODY_PARTS, bookFor, weekInfo, convert, tidy, target, history, exKey, niceDate, localDate, fromLocalDate, round5, partById, customProgram } from './logic'
 
 // A number box that lets you type freely (including "12.") and saves each valid value.
 function NumInput({ value, fallback, onCommit, kind, ...rest }) {
@@ -33,20 +33,33 @@ export default function Session({ v, id, onClose }) {
   const [openSet, setOpenSet] = useState(null)
   const [newName, setNewName] = useState('')
   const [savePreset, setSavePreset] = useState(false)
+  const [restOver, setRestOver] = useState(false)
 
   useEffect(() => {
     if (!restEnd) return
     const t = setInterval(() => {
-      if (Date.now() >= restEnd) setRestEnd(0)
+      if (Date.now() >= restEnd) {
+        setRestEnd(0)
+        setRestOver(true)
+      }
       tick((n) => n + 1)
     }, 250)
     return () => clearInterval(t)
   }, [restEnd])
 
+  // "Rest over" stays up for a few seconds, then the bar goes back to the rest setting.
+  useEffect(() => {
+    if (!restOver) return
+    const t = setTimeout(() => setRestOver(false), 5000)
+    return () => clearTimeout(t)
+  }, [restOver])
+
   const isProgram = w.source === 'program'
   const info = isProgram ? weekInfo(w.program_block, w.program_week) : null
   const book = isProgram ? bookFor(w.program_block) : null
   const exercises = v.exercises[w.id] || []
+  const part = isProgram ? partById(w.body_parts?.[0]) : null
+  const custom = customProgram(v)
   const today = localDate()
   const unit = v.profile.default_unit
 
@@ -83,24 +96,60 @@ export default function Session({ v, id, onClose }) {
     )
   }
 
+  const nextOrder = Math.max(-1, ...exercises.map((x) => x.order_index ?? 0)) + 1
+  const saveCustom = (next) => ['profiles', { id: v.uid, program_custom: next }]
+
   const addExercise = (e) => {
     e.preventDefault()
-    if (!newName.trim()) return
+    const name = newName.trim()
+    if (!name || exercises.some((x) => x.name.trim().toLowerCase() === name.toLowerCase())) return
     const exId = uuid()
-    write([
-      ['workout_exercises', { id: exId, workout_id: w.id, name: newName.trim(), order_index: exercises.length }],
-      ['workout_sets', { id: uuid(), exercise_id: exId, set_number: 1, reps: null, weight: null, unit, done: false }],
-    ])
+    if (part) {
+      // On a program day the new lift joins the program: same sets, reps and percentage,
+      // today and on every later day for this body part.
+      const key = `custom-${uuid().slice(0, 8)}`
+      write([
+        ['workout_exercises', { id: exId, workout_id: w.id, name, order_index: nextOrder, exercise_key: key }],
+        saveCustom({ ...custom, added: { ...custom.added, [part.id]: [...(custom.added[part.id] || []), { key, name }] } }),
+      ])
+    } else {
+      write([
+        ['workout_exercises', { id: exId, workout_id: w.id, name, order_index: nextOrder }],
+        ['workout_sets', { id: uuid(), exercise_id: exId, set_number: 1, reps: null, weight: null, unit, done: false }],
+      ])
+    }
     setNewName('')
   }
 
-  const removeExercise = async (ex) => {
-    if (!(await askConfirm(`Remove ${ex.name} and its sets?`, { ok: 'Remove', danger: true }))) return
-    const at = nowISO()
+  // Put back a program lift that was removed earlier.
+  const restoreExercise = (ex) =>
     write([
+      ['workout_exercises', { id: uuid(), workout_id: w.id, name: ex.name, order_index: nextOrder, exercise_key: ex.id }],
+      saveCustom({ ...custom, removed: custom.removed.filter((k) => k !== ex.id) }),
+    ])
+  const removedHere = part ? part.exercises.filter((ex) => custom.removed.includes(ex.id) && !exercises.some((x) => x.exercise_key === ex.id)) : []
+
+  const removeExercise = async (ex) => {
+    const text = part
+      ? `Remove ${ex.name} from your program? It comes off today's workout and will not appear on ${part.name} days from now on. You can add it back at the bottom of this screen.`
+      : `Remove ${ex.name} and its sets?`
+    if (!(await askConfirm(text, { ok: 'Remove', danger: true }))) return
+    const at = nowISO()
+    const ops = [
       ['workout_exercises', { id: ex.id, deleted_at: at }],
       ...(v.sets[ex.id] || []).map((s) => ['workout_sets', { id: s.id, deleted_at: at }]),
-    ])
+    ]
+    if (part && ex.exercise_key) {
+      const isOwn = (custom.added[part.id] || []).some((a) => a.key === ex.exercise_key)
+      ops.push(
+        saveCustom(
+          isOwn
+            ? { ...custom, added: { ...custom.added, [part.id]: custom.added[part.id].filter((a) => a.key !== ex.exercise_key) } }
+            : { ...custom, removed: [...new Set([...custom.removed, ex.exercise_key])] },
+        ),
+      )
+    }
+    write(ops)
   }
 
   // A set counts once it is ticked, or at finish time if both boxes are filled in.
@@ -149,6 +198,32 @@ export default function Session({ v, id, onClose }) {
       <button className="back" onClick={onClose}>
         ‹ Back
       </button>
+
+      <div className={left > 0 ? 'restbar running' : restOver ? 'restbar over' : 'restbar'} role="timer">
+        {left > 0 ? (
+          <>
+            <strong>
+              Rest {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
+            </strong>
+            <button onClick={() => setRestEnd(0)}>Skip</button>
+          </>
+        ) : (
+          <>
+            <span>{restOver ? 'Rest over. Time for your next set.' : 'Rest between sets'}</span>
+            <select aria-label="Rest between sets" value={v.profile.rest_seconds} onChange={(e) => write([['profiles', { id: v.uid, rest_seconds: Number(e.target.value) }]])}>
+              <option value={0}>Off</option>
+              <option value={30}>30 sec</option>
+              <option value={45}>45 sec</option>
+              <option value={60}>1 min</option>
+              <option value={90}>1 min 30</option>
+              <option value={120}>2 min</option>
+              <option value={180}>3 min</option>
+              <option value={300}>5 min</option>
+            </select>
+          </>
+        )}
+      </div>
+
       <div className="weekhead">
         <p className="eyebrow">
           {isProgram
@@ -202,11 +277,9 @@ export default function Session({ v, id, onClose }) {
                   onChange={(e) => write([['workout_exercises', { id: ex.id, name: e.target.value }]])}
                 />
               )}
-              {!isProgram && (
-                <button className="link" onClick={() => removeExercise(ex)}>
-                  Remove
-                </button>
-              )}
+              <button className="link" aria-label={`Remove ${ex.name}`} onClick={() => removeExercise(ex)}>
+                Remove
+              </button>
             </div>
             <p className="muted small">
               {isProgram && (tgt ? `Target ${tgt} lb` : 'No max yet. Log what you use and the app will estimate one.')}
@@ -262,7 +335,10 @@ export default function Session({ v, id, onClose }) {
                       disabled={!ready}
                       onClick={() => {
                         saveSet(ex, row, { weight: shownW, reps: shownR, done: !row.done })
-                        if (!row.done && v.profile.rest_seconds > 0) setRestEnd(Date.now() + v.profile.rest_seconds * 1000)
+                        if (!row.done && v.profile.rest_seconds > 0) {
+                          setRestOver(false)
+                          setRestEnd(Date.now() + v.profile.rest_seconds * 1000)
+                        }
                       }}
                     >
                       ✓
@@ -316,14 +392,30 @@ export default function Session({ v, id, onClose }) {
         )
       })}
 
-      {!isProgram && (
-        <form className="card addex" onSubmit={addExercise}>
-          <input aria-label="New exercise name" placeholder="Exercise name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <button className="primary" disabled={!newName.trim()}>
-            Add exercise
-          </button>
-        </form>
-      )}
+      <form className="card addex" onSubmit={addExercise}>
+        <input aria-label="New exercise name" placeholder="Exercise name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <button className="primary" disabled={!newName.trim()}>
+          Add exercise
+        </button>
+        {part && (
+          <p className="muted small">
+            An exercise you add follows this week's plan ({info.sets} sets of {info.reps} at {Math.round(info.pct * 100)}% of your max) and
+            stays on your {part.name} days.
+          </p>
+        )}
+        {removedHere.length > 0 && (
+          <>
+            <p className="fieldname">Add back</p>
+            <div className="chips">
+              {removedHere.map((ex) => (
+                <button type="button" key={ex.id} onClick={() => restoreExercise(ex)}>
+                  + {ex.name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </form>
 
       {isProgram && (
         <details className="card extras">
@@ -346,15 +438,15 @@ export default function Session({ v, id, onClose }) {
             value={w.extras?.cardio?.note || ''}
             onChange={(e) => setExtras({ cardio: { ...w.extras?.cardio, note: e.target.value } })}
           />
-          {extrasFor(book.id).map((group) => (
+          {ADDONS.map((group) => (
             <div key={group.title}>
               <h4>{group.title}</h4>
               <div className="chips">
                 {group.items.map((q) => {
-                  const list = w.extras?.queenax || []
+                  const list = w.extras?.addons || []
                   const on = list.includes(q)
                   return (
-                    <button key={q} aria-pressed={on} onClick={() => setExtras({ queenax: on ? list.filter((x) => x !== q) : [...list, q] })}>
+                    <button key={q} aria-pressed={on} onClick={() => setExtras({ addons: on ? list.filter((x) => x !== q) : [...list, q] })}>
                       {q}
                     </button>
                   )
@@ -386,12 +478,6 @@ export default function Session({ v, id, onClose }) {
           Delete this workout
         </button>
       </div>
-
-      {left > 0 && (
-        <button className="rest" onClick={() => setRestEnd(0)}>
-          Rest {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} <small>tap to skip</small>
-        </button>
-      )}
     </section>
   )
 }

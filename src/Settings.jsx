@@ -74,6 +74,8 @@ export default function Settings({ v, snap, onClose, intent, welcome, onWelcomed
             <option value={60}>60 seconds</option>
             <option value={90}>90 seconds</option>
             <option value={120}>2 minutes</option>
+            <option value={180}>3 minutes</option>
+            <option value={300}>5 minutes</option>
           </select>
         </label>
       </div>

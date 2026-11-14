@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { PARTS, programById } from './program'
 import { write, uuid, nowISO } from './db'
 import PhasePicker from './ProgramPicker'
-import { BODY_PARTS, currentWeek, weekInfo, bookFor, blockForBook, niceDate, localDate, fromLocalDate } from './logic'
+import { BODY_PARTS, currentWeek, weekInfo, bookFor, blockForBook, programExercises, niceDate, localDate, fromLocalDate } from './logic'
 import Session from './Session'
 import PresetEditor from './PresetEditor'
 import Library from './Library'
@@ -201,10 +201,10 @@ function ProgramCard({ v, inProgress, openSession, goMaxes, openDetails }) {
           program_block: block,
           program_week: week,
           finished_at: null,
-          extras: { cardio: { type: '', note: '' }, queenax: [] },
+          extras: { cardio: { type: '', note: '' }, addons: [] },
         },
       ],
-      ...part.exercises.map((ex, i) => [
+      ...programExercises(v, part.id).map((ex, i) => [
         'workout_exercises',
         { id: uuid(), workout_id: id, name: ex.name, order_index: i, exercise_key: ex.id },
       ]),
@@ -251,7 +251,7 @@ function ProgramCard({ v, inProgress, openSession, goMaxes, openDetails }) {
                     onClick={() => (done ? openSession(done.id) : startDay(p))}
                   >
                     <strong>{p.name}</strong>
-                    <small>{done ? `Done ${niceDate(done.performed_at)}` : `${p.exercises.length} exercises`}</small>
+                    <small>{done ? `Done ${niceDate(done.performed_at)}` : `${programExercises(v, p.id).length} exercises`}</small>
                   </button>
                 )
               })}

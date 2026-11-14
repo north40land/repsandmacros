@@ -14,6 +14,27 @@ export const BODY_PARTS = [
 ]
 
 export const partById = (id) => PARTS.find((p) => p.id === id)
+
+// Each person can tailor the program: take lifts out and add their own. The choices are
+// kept on the profile as { removed: [exercise keys], added: { partId: [{ key, name }] } }.
+export function customProgram(v) {
+  const c = v.profile.program_custom || {}
+  return { removed: c.removed || [], added: c.added || {} }
+}
+// The lifts a person actually does for a body part: the program's own, minus the ones
+// they removed, plus the ones they added. Added lifts follow the same sets, reps and
+// percentage as the rest of the week.
+export function programExercises(v, partId) {
+  const c = customProgram(v)
+  const part = partById(partId)
+  if (!part) return []
+  return [...part.exercises.filter((ex) => !c.removed.includes(ex.id)), ...(c.added[partId] || []).map((a) => ({ id: a.key, name: a.name, custom: true }))]
+}
+// Every lift that has ever been part of this person's program for a body part (for history).
+export function everyProgramLift(v, partId) {
+  const part = partById(partId)
+  return [...part.exercises, ...(customProgram(v).added[partId] || []).map((a) => ({ id: a.key, name: a.name, custom: true }))]
+}
 // Blocks run through the three phases in order and then repeat: 1, 2, 3, 1, ...
 export const bookFor = (block) => BOOKS[(Math.max(1, block) - 1) % BOOKS.length]
 export const weekInfo = (block, w) => bookFor(block).weeks[Math.min(w, 4) - 1]
