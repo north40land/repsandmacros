@@ -1,4 +1,4 @@
-import { PARTS, WEEKS } from './program'
+import { PARTS, BOOKS } from './program'
 
 export const BODY_PARTS = [
   ['chest', 'Chest'],
@@ -14,8 +14,11 @@ export const BODY_PARTS = [
 ]
 
 export const partById = (id) => PARTS.find((p) => p.id === id)
-export const weekInfo = (w) => WEEKS[Math.min(w, 4) - 1]
-export const round5 = (x) => Math.max(5, Math.round(x / 5) * 5)
+// Blocks run through the three phases in order and then repeat: 1, 2, 3, 1, ...
+export const bookFor = (block) => BOOKS[(Math.max(1, block) - 1) % BOOKS.length]
+export const weekInfo = (block, w) => bookFor(block).weeks[Math.min(w, 4) - 1]
+// The workbook rounds every weight up to the next 5 lb, so the app does too.
+export const round5 = (x) => Math.max(5, Math.ceil(x / 5 - 1e-9) * 5)
 
 const time = (iso) => Date.parse(iso) || 0
 const groupBy = (rows, field) => {
@@ -60,10 +63,10 @@ export function currentWeek(v) {
   return 5
 }
 
-// Target weight for a program lift: 1RM x the week's percentage, to the nearest 5 lb.
-export function target(v, exerciseKey, week) {
+// Target weight for a program lift: 1RM x the week's percentage, rounded up to 5 lb.
+export function target(v, exerciseKey, block, week) {
   const max = v.maxes[exerciseKey]?.value
-  return max ? round5(max * weekInfo(week).pct) : null
+  return max ? round5(max * weekInfo(block, week).pct) : null
 }
 
 // Program lifts are tracked by their fixed key; free-form ones by name.

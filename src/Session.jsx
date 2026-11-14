@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { CARDIO, QUEENAX } from './program'
+import { CARDIO, extrasFor } from './program'
 import { write, uuid, nowISO } from './db'
-import { BODY_PARTS, weekInfo, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
+import { BODY_PARTS, bookFor, weekInfo, target, history, exKey, niceDate, localDate, fromLocalDate, round5 } from './logic'
 
 // A number box that lets you type freely (including "12.") and saves each valid value.
 function NumInput({ value, fallback, onCommit, kind, ...rest }) {
@@ -43,7 +43,8 @@ export default function Session({ v, id, onClose }) {
   }, [restEnd])
 
   const isProgram = w.source === 'program'
-  const info = isProgram ? weekInfo(w.program_week) : null
+  const info = isProgram ? weekInfo(w.program_block, w.program_week) : null
+  const book = isProgram ? bookFor(w.program_block) : null
   const exercises = v.exercises[w.id] || []
   const today = localDate()
   const unit = v.profile.default_unit
@@ -150,7 +151,7 @@ export default function Session({ v, id, onClose }) {
       <div className="weekhead">
         <p className="eyebrow">
           {isProgram
-            ? `Block ${w.program_block} · Week ${w.program_week} · ${info.sets} × ${info.reps} at ${Math.round(info.pct * 100)}%`
+            ? `${book.name} · Week ${w.program_week} · ${info.sets} × ${info.reps} at ${Math.round(info.pct * 100)}%`
             : partNames || 'Workout'}
         </p>
         {isProgram ? (
@@ -179,7 +180,7 @@ export default function Session({ v, id, onClose }) {
       {!exercises.length && <p className="muted">No exercises yet. Add the first one below.</p>}
 
       {exercises.map((ex) => {
-        const tgt = isProgram ? target(v, ex.exercise_key, w.program_week) : null
+        const tgt = isProgram ? target(v, ex.exercise_key, w.program_block, w.program_week) : null
         const prev = history(v, exKey(ex))
           .filter((h) => h.id !== w.id)
           .pop()
@@ -304,7 +305,7 @@ export default function Session({ v, id, onClose }) {
 
       {isProgram && (
         <details className="card extras">
-          <summary>Cardio and Queenax</summary>
+          <summary>Cardio and add-ons</summary>
           <h4>Cardio</h4>
           <div className="chips">
             {CARDIO.map((c) => (
@@ -323,18 +324,22 @@ export default function Session({ v, id, onClose }) {
             value={w.extras?.cardio?.note || ''}
             onChange={(e) => setExtras({ cardio: { ...w.extras?.cardio, note: e.target.value } })}
           />
-          <h4>Queenax</h4>
-          <div className="chips">
-            {QUEENAX.map((q) => {
-              const list = w.extras?.queenax || []
-              const on = list.includes(q)
-              return (
-                <button key={q} aria-pressed={on} onClick={() => setExtras({ queenax: on ? list.filter((x) => x !== q) : [...list, q] })}>
-                  {q}
-                </button>
-              )
-            })}
-          </div>
+          {extrasFor(book.id).map((group) => (
+            <div key={group.title}>
+              <h4>{group.title}</h4>
+              <div className="chips">
+                {group.items.map((q) => {
+                  const list = w.extras?.queenax || []
+                  const on = list.includes(q)
+                  return (
+                    <button key={q} aria-pressed={on} onClick={() => setExtras({ queenax: on ? list.filter((x) => x !== q) : [...list, q] })}>
+                      {q}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </details>
       )}
 

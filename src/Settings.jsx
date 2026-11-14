@@ -1,5 +1,7 @@
 import { supabase } from './supa'
 import { write, sync, signOut } from './db'
+import { BOOKS } from './program'
+import { bookFor } from './logic'
 
 const STATUS = {
   off: 'Cloud accounts are not connected yet. Everything is saved on this phone only.',
@@ -13,6 +15,16 @@ export default function Settings({ v, snap }) {
   const { db, session, status } = snap
   const waiting = Object.keys(db.pending).length
   const save = (patch) => write([['profiles', { id: v.uid, ...patch }]])
+
+  // Jump to another phase by opening a fresh block for it. Past blocks keep their history.
+  const book = bookFor(v.profile.program_block)
+  const switchPhase = (bookId) => {
+    if (bookId === book.id) return
+    const used = Math.max(v.profile.program_block, ...v.workouts.map((w) => w.program_block || 0))
+    let block = used + 1
+    while (bookFor(block).id !== bookId) block += 1
+    save({ program_block: block })
+  }
 
   const backup = () => {
     const blob = new Blob([JSON.stringify(db.tables, null, 2)], { type: 'application/json' })
@@ -42,6 +54,19 @@ export default function Settings({ v, snap }) {
           Your name
           <input value={v.profile.display_name} onChange={(e) => save({ display_name: e.target.value })} />
         </label>
+        <label>
+          Training phase
+          <select value={book.id} onChange={(e) => switchPhase(Number(e.target.value))}>
+            {BOOKS.map((b) => (
+              <option key={b.id} value={b.id}>
+                Phase {b.id}: {b.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="muted small">
+          Phases move on by themselves after four weeks. Changing this starts the chosen phase at week 1.
+        </p>
         <label>
           Weight unit for new sets
           <select value={v.profile.default_unit} onChange={(e) => save({ default_unit: e.target.value })}>

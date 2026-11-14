@@ -1,11 +1,40 @@
-// The 4-week hypertrophy block, transcribed from the paper sheet.
-// The sheet's pre-filled weights are intentionally left out.
+// The 12-week periodized program: three 4-week phases ("books") that run in order,
+// transcribed from the "2024 Periodization with Mods" workbook. All three phases use
+// the same 38 lifts; only the sets, reps and percentage of one-rep max change.
+// The workbook's pre-filled weights are intentionally left out: the app works them
+// out from each person's own maxes.
 
-export const WEEKS = [
-  { week: 1, sets: 4, reps: 15, pct: 0.6 },
-  { week: 2, sets: 3, reps: 16, pct: 0.65 },
-  { week: 3, sets: 2, reps: 18, pct: 0.55 },
-  { week: 4, sets: 4, reps: 12, pct: 0.7 },
+export const BOOKS = [
+  {
+    id: 1,
+    name: 'Hypertrophy',
+    weeks: [
+      { sets: 4, reps: 15, pct: 0.6 },
+      { sets: 3, reps: 16, pct: 0.65 },
+      { sets: 2, reps: 18, pct: 0.55 },
+      { sets: 4, reps: 12, pct: 0.7 },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Hypertrophy and Strength',
+    weeks: [
+      { sets: 5, reps: 8, pct: 0.75 },
+      { sets: 6, reps: 6, pct: 0.85 },
+      { sets: 5, reps: 7, pct: 0.8 },
+      { sets: 5, reps: 6, pct: 0.9 },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Strength',
+    weeks: [
+      { sets: 5, reps: 4, pct: 0.85 },
+      { sets: 6, reps: 4, pct: 0.9 },
+      { sets: 7, reps: 3, pct: 0.95 },
+      { sets: 5, reps: 2, pct: 1 },
+    ],
+  },
 ]
 
 const part = (id, name, names) => ({
@@ -106,3 +135,68 @@ export const QUEENAX = [
   'Lat. Box Lunge Steps',
   'Rev. Toe Touches',
 ]
+
+// Phases 2 and 3 replace the Queenax list with these add-on groups.
+export const GROUP_B = [
+  'Cable Flies',
+  'Bosu Pushups',
+  'Skull Crushers',
+  'DB Kickbacks',
+  'Hyperextension',
+  'Cable Pulls',
+  'Box Step Up Variations',
+  'BB Thrusters',
+  'Goblet Squats',
+  'Reverse Lunges',
+  'Queenax / TRX',
+  'Wobble',
+  'Inverted Toe Touches',
+  'Slide Out/Hold',
+  'Oblique Bends',
+  'Knee Tucks',
+  'Lateral Lunges',
+  'Hamstring Curls',
+  'Bulgarian Squat',
+  'Pistol Squat',
+]
+
+export const GROUP_C = [
+  'Farmers Carry',
+  '20 sec Burpees',
+  'Ball Slams',
+  'Jump Rope',
+  'Battle Ropes',
+  'Sled Push',
+  'Ball Throw',
+  'Shuttle Run',
+  '30 Sec Sprint',
+  'Plate Press',
+  'TB Jump Squats',
+]
+
+export const UNLISTED = [
+  'Jump Squats',
+  'Push Ups',
+  'Off Set Push ups',
+  'Row Prone/Sup.',
+  'Curls',
+  'Pull Up',
+  'Jump Pull Ups',
+  'Swing',
+  'Landmine Squat',
+  'Landmine Twist',
+  'Rope Pull',
+  'V-Ups',
+  'Mario Jumps',
+  'Dips',
+]
+
+// The tick lists shown under a program day, by phase.
+export const extrasFor = (bookId) =>
+  bookId === 1
+    ? [{ title: 'Queenax', items: QUEENAX }]
+    : [
+        { title: 'Group B', items: GROUP_B },
+        { title: 'Group C', items: GROUP_C },
+        { title: 'Other activities', items: UNLISTED },
+      ]

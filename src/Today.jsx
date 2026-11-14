@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PARTS } from './program'
 import { write, uuid, nowISO } from './db'
-import { BODY_PARTS, currentWeek, weekInfo, niceDate, localDate, fromLocalDate } from './logic'
+import { BODY_PARTS, currentWeek, weekInfo, bookFor, niceDate, localDate, fromLocalDate } from './logic'
 import Session from './Session'
 import PresetEditor from './PresetEditor'
 
@@ -83,7 +83,9 @@ export default function Today({ v, goMaxes }) {
     openSession(id)
   }
 
-  const info = week <= 4 ? weekInfo(week) : null
+  const book = bookFor(block)
+  const nextBook = bookFor(block + 1)
+  const info = week <= 4 ? weekInfo(block, week) : null
   const doneThisWeek = (partId) =>
     v.workouts.find(
       (w) =>
@@ -111,11 +113,11 @@ export default function Today({ v, goMaxes }) {
         </button>
       )}
 
-      <h3>Hypertrophy block</h3>
+      <h3>Program · Phase {book.id} of 3</h3>
       {info ? (
         <>
           <p className="muted small">
-            Block {block} · Week {week} of 4 · {info.sets} sets × {info.reps} reps at {Math.round(info.pct * 100)}% of
+            {book.name} · Week {week} of 4 · {info.sets} sets × {info.reps} reps at {Math.round(info.pct * 100)}% of
             one-rep max
           </p>
           <div className="parts">
@@ -137,8 +139,11 @@ export default function Today({ v, goMaxes }) {
         </>
       ) : (
         <div className="card center">
-          <h4>Block {block} complete</h4>
-          <p className="muted">All four weeks are logged. Start the next month and update your one-rep maxes.</p>
+          <h4>{book.name} complete</h4>
+          <p className="muted">
+            All four weeks are logged. Next is phase {nextBook.id}, {nextBook.name}. Update your one-rep maxes before you
+            start.
+          </p>
           <button
             className="primary"
             onClick={() => {
@@ -146,7 +151,7 @@ export default function Today({ v, goMaxes }) {
               goMaxes()
             }}
           >
-            Start block {block + 1}
+            Start {nextBook.name}
           </button>
         </div>
       )}

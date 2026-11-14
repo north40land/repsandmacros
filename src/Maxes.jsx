@@ -1,10 +1,11 @@
 import { PARTS } from './program'
 import { write, nowISO } from './db'
-import { currentWeek, target, weekInfo } from './logic'
+import { currentWeek, target, weekInfo, bookFor } from './logic'
 
 export default function Maxes({ v }) {
   const week = Math.min(currentWeek(v), 4)
-  const info = weekInfo(week)
+  const block = v.profile.program_block
+  const info = weekInfo(block, week)
   const entered = PARTS.flatMap((p) => p.exercises).filter((ex) => v.maxes[ex.id]?.value).length
 
   const set = (exerciseKey, text) => {
@@ -19,10 +20,10 @@ export default function Maxes({ v }) {
   return (
     <section>
       <div className="weekhead">
-        <p className="eyebrow">Block {v.profile.program_block} · one-rep maxes</p>
+        <p className="eyebrow">{bookFor(block).name} · one-rep maxes</p>
         <h2>{entered} of 38 set</h2>
         <p className="muted">
-          Enter the maxes you know. Targets are {Math.round(info.pct * 100)}% this week, rounded to 5 lb. Lifts left
+          Enter the maxes you know. Targets are {Math.round(info.pct * 100)}% this week, rounded up to 5 lb. Lifts left
           blank get an estimate after the first time you log them.
         </p>
       </div>
@@ -33,7 +34,7 @@ export default function Maxes({ v }) {
           <div className="card maxes">
             {part.exercises.map((ex) => {
               const m = v.maxes[ex.id]
-              const tgt = target(v, ex.id, week)
+              const tgt = target(v, ex.id, block, week)
               return (
                 <label key={ex.id}>
                   <span>
