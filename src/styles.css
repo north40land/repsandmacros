@@ -858,3 +858,19 @@ input.readonly {
 section > .toggle {
   margin: 4px 0 8px;
 }
+
+/* recipes and barcode */
+.perserving .barline {
+  margin-bottom: 6px;
+}
+.camera video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 16px;
+  background: #000;
+  border: 1px solid var(--line);
+}
+section > .secondary + .secondary {
+  margin-top: 8px;
+}

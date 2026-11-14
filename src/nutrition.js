@@ -19,18 +19,21 @@ export const tidyName = (s) => {
   return text === text.toUpperCase() ? text.charAt(0) + text.slice(1).toLowerCase() : text
 }
 
-// Turn a USDA search result into this app's food shape. Macros are per 100 g.
-export function fromUsda(r) {
+// "1 slice" stays as it is; a bare weight such as "35 g" becomes "serving" so the label does not repeat itself.
+const servingName = (text) => (text && !/^\s*[\d.]+\s*(g|ml)\s*$/i.test(text) ? tidyName(text).toLowerCase() : 'serving')
+
+// Turn a search or barcode result into this app's food shape. Macros are per 100 g.
+export function fromLookup(r) {
   const portion = r.servingSize > 0 ? round(r.servingSize, 1) : null
   return {
-    source: 'usda',
-    external_id: String(r.fdcId),
+    source: r.source || 'usda',
+    external_id: String(r.fdcId ?? r.code),
     name: tidyName(r.description),
     brand: r.brand ? tidyName(r.brand) : null,
     serving_size: 100,
     serving_unit: 'g',
     portion_g: portion,
-    portion_label: portion ? `${r.servingText ? tidyName(r.servingText).toLowerCase() : 'serving'} (${portion} g)` : null,
+    portion_label: portion ? `${servingName(r.servingText)} (${portion} g)` : null,
     calories: round(r.calories, 0),
     protein: round(r.protein),
     carbs: round(r.carbs),

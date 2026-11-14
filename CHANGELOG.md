@@ -1,5 +1,16 @@
 # Changelog
 
+## Phase 3, part 2: Recipes and barcodes (2026-11-13)
+
+Tested in local-only mode and against the live database on a computer. Camera scanning has not been tested on any device.
+
+- Recipes: add ingredients with amounts, say how many servings it makes, and the recipe is saved under "My foods" with per-serving numbers. Recipes can be edited and deleted; days already logged keep their numbers.
+- Barcode lookup: "Scan or enter a barcode" on the add-food screen. Open Food Facts is checked first, then USDA branded foods.
+- Camera scanning uses the browser's Barcode Detection API where it exists, with a type-in box everywhere else. iPhone Safari does not have that API, so iPhones get the type-in box.
+- Migration: `supabase/migrations/0004_recipes.sql` (adds `foods.recipe`). Applied to the live database on 2026-11-13.
+- Edge function: `supabase/functions/food-barcode`. Deployed on 2026-11-13, "Verify JWT with legacy secret" off.
+- The function identifies the app to Open Food Facts as `RepsAndMacros/1.0 (+https://repsandmacros.com)`, as their terms require.
+
 ## Phase 3, part 1: Nutrition log (2026-11-13)
 
 Tested in local-only mode and against the live database on a computer. Not yet confirmed on a phone.

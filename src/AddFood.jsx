@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { supabase } from './supa'
 import { write, uuid, nowISO } from './db'
-import { MEALS, MACROS, fmt, fromUsda, unitsFor, macrosFor } from './nutrition'
+import { MEALS, MACROS, fmt, fromLookup, unitsFor, macrosFor } from './nutrition'
 import { askConfirm } from './confirm'
 import { MacroFields } from './Food'
+import Recipe from './Recipe'
+import Scan from './Scan'
 
 const TABS = [
   ['search', 'Search'],
@@ -15,15 +17,44 @@ const TABS = [
 const line = (f) =>
   `${fmt(f.calories)} cal · P ${fmt(f.protein)} · C ${fmt(f.carbs)} · F ${fmt(f.fat)} per ${fmt(f.serving_size)} ${f.serving_unit}`
 
-export default function AddFood({ v, date, meal, onClose }) {
+// Find a food and say how much. Normally that logs it to a meal; when `onIngredient`
+// is given it hands the chosen amount back instead (used by the recipe builder).
+export default function AddFood({ v, date, meal, onClose, onIngredient }) {
   const [tab, setTab] = useState(v.foods.some((f) => f.last_used_at) ? 'recent' : 'search')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
   const [state, setState] = useState('idle') // idle | loading | error | limited
   const [picked, setPicked] = useState(null)
-  const [editing, setEditing] = useState(null) // custom food being created or edited
+  const [editing, setEditing] = useState(null) // 'new' | 'recipe' | an existing food of mine
+  const [scanning, setScanning] = useState(false)
 
-  if (picked) return <Amount v={v} food={picked} date={date} meal={meal} onBack={() => setPicked(null)} onDone={onClose} />
+  if (picked) {
+    return <Amount v={v} food={picked} date={date} meal={meal} onBack={() => setPicked(null)} onDone={onClose} onIngredient={onIngredient} />
+  }
+  if (scanning) {
+    return (
+      <Scan
+        onBack={() => setScanning(false)}
+        onFood={(food) => {
+          setScanning(false)
+          setPicked(food)
+        }}
+      />
+    )
+  }
+  if (editing === 'recipe' || editing?.source === 'recipe') {
+    return (
+      <Recipe
+        v={v}
+        food={editing === 'recipe' ? null : editing}
+        onBack={() => setEditing(null)}
+        onSaved={(food) => {
+          setEditing(null)
+          setPicked(food)
+        }}
+      />
+    )
+  }
   if (editing) {
     return (
       <CustomFood
@@ -47,7 +78,7 @@ export default function AddFood({ v, date, meal, onClose }) {
       setState(error?.context?.status === 429 ? 'limited' : 'error')
       return
     }
-    setResults(data.foods.map(fromUsda))
+    setResults(data.foods.map(fromLookup))
     setState('idle')
   }
 
@@ -55,14 +86,13 @@ export default function AddFood({ v, date, meal, onClose }) {
   const lists = {
     recent: saved.filter((f) => f.last_used_at).sort((a, b) => Date.parse(b.last_used_at) - Date.parse(a.last_used_at)).slice(0, 30),
     favorites: saved.filter((f) => f.favorite).sort((a, b) => a.name.localeCompare(b.name)),
-    mine: saved.filter((f) => f.source === 'custom').sort((a, b) => a.name.localeCompare(b.name)),
+    mine: saved.filter((f) => f.source === 'custom' || f.source === 'recipe').sort((a, b) => a.name.localeCompare(b.name)),
   }
   const empty = {
     recent: 'Foods you log will show up here for quick entry.',
     favorites: 'Tap the star on a food to keep it here.',
-    mine: 'Foods you create yourself, such as home recipes, are kept here.',
+    mine: 'Foods and recipes you create yourself are kept here.',
   }
-  const mealName = MEALS.find(([id]) => id === meal)[1]
 
   return (
     <section>
@@ -70,7 +100,7 @@ export default function AddFood({ v, date, meal, onClose }) {
         ‹ Back
       </button>
       <div className="weekhead">
-        <p className="eyebrow">Add to {mealName.toLowerCase()}</p>
+        <p className="eyebrow">{onIngredient ? 'Add an ingredient' : `Add to ${MEALS.find(([id]) => id === meal)[1].toLowerCase()}`}</p>
         <h2>Find a food</h2>
       </div>
 
@@ -114,9 +144,19 @@ export default function AddFood({ v, date, meal, onClose }) {
           <p className="muted small">{empty[tab]}</p>
         ))}
 
+      {supabase && (
+        <button className="secondary" onClick={() => setScanning(true)}>
+          Scan or enter a barcode
+        </button>
+      )}
       <button className="secondary" onClick={() => setEditing('new')}>
         Create a food
       </button>
+      {!onIngredient && (
+        <button className="secondary" onClick={() => setEditing('recipe')}>
+          Create a recipe
+        </button>
+      )}
     </section>
   )
 }
@@ -130,7 +170,7 @@ function FoodList({ foods, onPick, onEdit, star }) {
             <span>
               {f.name}
               <small className="left">
-                {f.brand ? `${f.brand} · ` : ''}
+                {f.source === 'recipe' ? 'Recipe · ' : f.brand ? `${f.brand} · ` : ''}
                 {line(f)}
               </small>
             </span>
@@ -156,8 +196,8 @@ function FoodList({ foods, onPick, onEdit, star }) {
   )
 }
 
-// Enter how much, see the numbers, and log it.
-function Amount({ v, food, date, meal, onBack, onDone }) {
+// Enter how much, see the numbers, and log it (or hand it back as a recipe ingredient).
+function Amount({ v, food, date, meal, onBack, onDone, onIngredient }) {
   const units = unitsFor(food)
   const [unit, setUnit] = useState(units[0][0])
   const [quantity, setQuantity] = useState(units[0][0] === 'g' ? '100' : '1')
@@ -170,10 +210,14 @@ function Amount({ v, food, date, meal, onBack, onDone }) {
   const valid = q > 0 && (!manual || MACROS.every((m) => manual[m] !== '' && Number(manual[m]) >= 0))
 
   const add = () => {
+    const values = manual ? Object.fromEntries(MACROS.map((m) => [m, Number(manual[m])])) : computed
+    if (onIngredient) {
+      onIngredient({ name: food.name, brand: food.brand || null, quantity: q, unit, ...values })
+      return
+    }
     // A database food is copied into this person's own foods the first time it is logged.
     const existing = food.id ? food : v.foods.find((f) => f.source === food.source && f.external_id && f.external_id === food.external_id)
     const foodId = existing?.id || uuid()
-    const values = manual ? Object.fromEntries(MACROS.map((m) => [m, Number(manual[m])])) : computed
     write([
       ['foods', { ...(existing ? {} : food), id: foodId, favorite, last_used_at: nowISO() }],
       ['food_logs', { id: uuid(), logged_on: date, meal: toMeal, food_id: foodId, name: food.name, brand: food.brand || null, quantity: q, unit, ...values }],
@@ -228,26 +272,30 @@ function Amount({ v, food, date, meal, onBack, onDone }) {
             Edit the numbers by hand
           </button>
         )}
-        <label>
-          Meal
-          <select value={toMeal} onChange={(e) => setToMeal(e.target.value)}>
-            {MEALS.map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="toggle">
-          <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
-          Keep in favorites
-        </label>
+        {!onIngredient && (
+          <>
+            <label>
+              Meal
+              <select value={toMeal} onChange={(e) => setToMeal(e.target.value)}>
+                {MEALS.map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="toggle">
+              <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
+              Keep in favorites
+            </label>
+          </>
+        )}
       </div>
 
       <div className="actions">
         {!valid && <p className="warn small">Enter an amount above 0 and numbers of 0 or more.</p>}
         <button className="primary" disabled={!valid} onClick={add}>
-          Add to {MEALS.find(([id]) => id === toMeal)[1].toLowerCase()}
+          {onIngredient ? 'Add to recipe' : `Add to ${MEALS.find(([id]) => id === toMeal)[1].toLowerCase()}`}
         </button>
       </div>
     </section>
@@ -297,7 +345,7 @@ function CustomFood({ food, startName, onBack, onSaved }) {
       <div className="weekhead">
         <p className="eyebrow">My foods</p>
         <h2>{food ? 'Edit food' : 'Create a food'}</h2>
-        <p className="muted">Enter the numbers for one serving, as written on a label or worked out for a home recipe.</p>
+        <p className="muted">Enter the numbers for one serving, as written on a label.</p>
       </div>
       <div className="card">
         <label>
