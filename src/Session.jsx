@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CARDIO, ADDONS } from './program'
 import { write, uuid, nowISO } from './db'
 import { askConfirm } from './confirm'
+import ExercisePicker from './ExercisePicker'
 import { BODY_PARTS, bookFor, weekInfo, convert, tidy, target, history, exKey, niceDate, localDate, fromLocalDate, round5, partById, customProgram } from './logic'
 
 // A number box that lets you type freely (including "12.") and saves each valid value.
@@ -101,7 +102,10 @@ export default function Session({ v, id, onClose }) {
 
   const addExercise = (e) => {
     e.preventDefault()
-    const name = newName.trim()
+    addNamed(newName)
+  }
+  const addNamed = (text) => {
+    const name = text.trim()
     if (!name || exercises.some((x) => x.name.trim().toLowerCase() === name.toLowerCase())) return
     const exId = uuid()
     if (part) {
@@ -393,7 +397,16 @@ export default function Session({ v, id, onClose }) {
       })}
 
       <form className="card addex" onSubmit={addExercise}>
-        <input aria-label="New exercise name" placeholder="Exercise name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <ExercisePicker
+          v={v}
+          aria-label="New exercise name"
+          placeholder="Start typing an exercise"
+          value={newName}
+          onChange={setNewName}
+          onPick={addNamed}
+          parts={w.body_parts || []}
+          exclude={exercises.map((x) => x.name)}
+        />
         <button className="primary" disabled={!newName.trim()}>
           Add exercise
         </button>

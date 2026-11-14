@@ -1,5 +1,15 @@
 # Changelog
 
+## Exercise list to pick from (2026-11-14)
+
+Tested in local-only mode on a computer at phone width, in a workout of your own tagged Chest. The saved-workout editor and program days use the same box and were not tested separately. Not yet confirmed on a phone.
+
+- Adding an exercise no longer means typing the whole name. The box under a workout now shows a quick list: tap a row and the exercise is added.
+- Tapping the box shows the exercises for the workout's body parts (a Chest workout lists chest exercises). Typing narrows the list, and words can be in any order and cut short: "inc db" finds Incline Dumbbell Press. Gym shorthand works too (db, bb, kb, rdl, ohp).
+- Exercises you have used before show first and are marked "Used before". Anything not in the list can still be typed and added as before.
+- The list has 228 exercises across chest, back, shoulders, biceps, triceps, legs, glutes, core, cardio and full body. It ships inside the app (`src/exercises.js`), so it works offline and needs no database change.
+- The same box is on program days (Add exercise) and in the saved-workout editor.
+
 ## Workout tweaks from real-world use (2026-11-14)
 
 Tested in local-only mode on a computer, on a program day. Not yet confirmed on a phone.

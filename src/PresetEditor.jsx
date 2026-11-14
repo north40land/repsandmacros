@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { write, nowISO } from './db'
 import { askConfirm } from './confirm'
 import { PartChips } from './Today'
+import ExercisePicker from './ExercisePicker'
 
 // Edit a saved workout: name, body parts, and each exercise's default sets.
 export default function PresetEditor({ v, id, onClose }) {
@@ -74,10 +75,17 @@ export default function PresetEditor({ v, id, onClose }) {
 
       {items.map((it, i) => (
         <div className="card" key={i}>
-          <label>
-            Exercise
-            <input value={it.name} onChange={(e) => edit(i, { name: e.target.value }, false)} />
-          </label>
+          <p className="fieldname">Exercise</p>
+          <ExercisePicker
+            v={v}
+            aria-label="Exercise name"
+            placeholder="Start typing an exercise"
+            value={it.name}
+            onChange={(name) => edit(i, { name }, false)}
+            onPick={(name) => edit(i, { name }, false)}
+            parts={parts}
+            exclude={items.filter((_, n) => n !== i).map((x) => x.name)}
+          />
           <div className="three">
             <label>
               Sets
