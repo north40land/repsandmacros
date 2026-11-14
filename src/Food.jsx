@@ -8,6 +8,7 @@ import AddFood from './AddFood'
 import Targets from './Targets'
 import Calculator from './Calculator'
 import Week from './Week'
+import { Water, Sleep } from './Daily'
 
 export default function Food({ v }) {
   const today = localDate()
@@ -73,6 +74,8 @@ export default function Food({ v }) {
         </button>
       </div>
 
+      <Water v={v} date={date} target={target} onTargets={() => setScreen({ type: 'targets' })} />
+
       {MEALS.map(([id, name]) => {
         const items = logs.filter((l) => l.meal === id)
         return (
@@ -108,6 +111,8 @@ export default function Food({ v }) {
           </div>
         )
       })}
+
+      <Sleep key={date} v={v} date={date} target={target} onTargets={() => setScreen({ type: 'targets' })} />
     </section>
   )
 }

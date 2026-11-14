@@ -50,6 +50,8 @@ export function view(db) {
     targets: mine('user_targets'),
     metrics: mine('user_profile_metrics')[0] || null,
     photos: mine('progress_photos'),
+    water: groupBy(mine('water_logs'), 'logged_on'),
+    sleep: Object.fromEntries(mine('sleep_logs').map((r) => [r.slept_on, r])),
     doseItems: mine('dose_items').sort((a, b) => a.name.localeCompare(b.name)),
     doseLogs: Object.fromEntries(mine('dose_logs').map((r) => [`${r.dose_item_id}|${r.scheduled_on}`, r])),
     bodyMetrics: mine('body_metrics').sort((a, b) => a.measured_on.localeCompare(b.measured_on)),

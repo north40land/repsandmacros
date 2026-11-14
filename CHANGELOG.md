@@ -1,5 +1,16 @@
 # Changelog
 
+## Phase 6: Water and sleep (2026-11-13)
+
+Tested in local-only mode on a computer. Saving to the live database is untested because the test preview was signed out.
+
+- Water card on the day view: quick-add buttons (8 and 16 oz, or 250 and 500 ml for people who use kilograms), a custom amount, undo for the last entry, and a daily total with a progress bar against the water target.
+- Sleep card on the day view: bedtime and wake time with the hours worked out (including across midnight), optional quality from 1 to 5, and a bar against the sleep target. One entry per night, filed under the day the person woke up.
+- Water and sleep targets can be changed on the targets page without switching off the calculator; only changing calories or macros by hand does that. A rest day without its own water or sleep target uses the main one.
+- Migration: `supabase/migrations/0009_water_sleep.sql` (water_logs, sleep_logs). Applied to the live database on 2026-11-13.
+
+Difference from the spec: `sleep_logs` is keyed by person and night (no separate id), so two phones cannot create two entries for the same night.
+
 ## Phase 5: Body metrics and progress photos (2026-11-13)
 
 Body metrics tested in local-only mode on a computer. Photo upload and viewing are untested: they need a signed-in account, and the test preview was signed out.

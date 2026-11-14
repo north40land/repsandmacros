@@ -28,14 +28,24 @@ export default function Targets({ v, onClose, onCalculator }) {
     const ops = []
     const put = (dayType, form) => {
       const todays = v.targets.find((t) => t.day_type === dayType && t.effective_from === today)
-      ops.push(['user_targets', { id: todays?.id || uuid(), day_type: dayType, effective_from: today, computed: false, ...toRow(form) }])
+      const before = latestTarget(v, dayType)
+      const same = before && ['calories', 'protein', 'carbs', 'fat'].every((k) => form[k] === toForm(before)[k])
+      ops.push(['user_targets', { id: todays?.id || uuid(), day_type: dayType, effective_from: today, computed: Boolean(same && before.computed), ...toRow(form) }])
     }
     put('training', training)
     if (separate) put('rest', rest)
     // Switching rest-day targets off removes them, so every day uses the main targets again.
     else for (const t of v.targets.filter((x) => x.day_type === 'rest')) ops.push(['user_targets', { id: t.id, deleted_at: nowISO() }])
-    // Typing targets in by hand switches off the calculator's automatic updates.
-    if (v.metrics?.auto) ops.push(['user_profile_metrics', { auto: false }])
+    // Changing calories or macros by hand switches off the calculator's automatic updates.
+    // Changing only the water or sleep target leaves the calculator in charge.
+    const MACRO_KEYS = ['calories', 'protein', 'carbs', 'fat']
+    const differs = (form, dayType) => {
+      const before = toForm(latestTarget(v, dayType))
+      return MACRO_KEYS.some((k) => form[k] !== before[k])
+    }
+    const hadRest = v.targets.some((t) => t.day_type === 'rest')
+    const macrosChanged = differs(training, 'training') || separate !== hadRest || (separate && differs(rest, 'rest'))
+    if (v.metrics?.auto && macrosChanged) ops.push(['user_profile_metrics', { auto: false }])
     write(ops)
     onClose()
   }
@@ -72,7 +82,12 @@ export default function Targets({ v, onClose, onCalculator }) {
         <span className="phasenote">Work out calories and macros from your height, weight, activity and goal.</span>
         <span className="go">Open the calculator ›</span>
       </button>
-      {v.metrics?.auto && v.metrics?.birth_date && <p className="muted small">Saving this page by hand turns off the calculator's automatic updates.</p>}
+      {v.metrics?.auto && v.metrics?.birth_date && (
+        <p className="muted small">
+          Calories and macros come from the calculator. Changing them here turns off its automatic updates; water and sleep can be
+          changed freely.
+        </p>
+      )}
 
       <h3>{separate ? 'Training days' : 'Every day'}</h3>
       <div className="card targetgrid">{fields(training, setTraining, separate ? 'Training day' : 'Daily')}</div>

@@ -77,8 +77,16 @@ export const isTrainingDay = (v, date) => v.workouts.some((w) => localDate(w.per
 export function targetFor(v, date) {
   const hasRest = v.targets.some((t) => t.day_type === 'rest')
   const dayType = hasRest && !isTrainingDay(v, date) ? 'rest' : 'training'
-  const rows = v.targets.filter((t) => t.day_type === dayType).sort((a, b) => a.effective_from.localeCompare(b.effective_from))
-  const target = [...rows].reverse().find((t) => t.effective_from <= date) || rows[0] || null
+  const pick = (type) => {
+    const rows = v.targets.filter((t) => t.day_type === type).sort((a, b) => a.effective_from.localeCompare(b.effective_from))
+    return [...rows].reverse().find((t) => t.effective_from <= date) || rows[0] || null
+  }
+  let target = pick(dayType)
+  // Water and sleep rarely differ by day type: a rest day without its own uses the main ones.
+  if (target && dayType === 'rest') {
+    const main = pick('training')
+    target = { ...target, water_oz: target.water_oz ?? main?.water_oz ?? null, sleep_hours: target.sleep_hours ?? main?.sleep_hours ?? null }
+  }
   return { target, dayType, hasRest }
 }
 
