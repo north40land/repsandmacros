@@ -1,5 +1,15 @@
 # Changelog
 
+## Nothing counts before your first day (2026-11-14)
+
+Tested in local-only mode on a computer at phone width: Home and the weekly nutrition page. The dosing history page has the same change and was not opened (no dose items in the test data). Not yet confirmed on a phone or with a real account.
+
+- Each person now has a first day: the day they registered, or the earliest day they have logged anything for if they back-date an entry.
+- Days before it are blank. On Home and the weekly nutrition page they no longer show as "nothing logged", they are left out of the day-by-day table and the CSV export, and they do not pull down the water average.
+- The "previous week" arrow on Home, weekly nutrition and dosing history stops at the week you started in.
+- The volume chart on Home leaves out weeks from before you started.
+- Migration: `supabase/migrations/0011_started_on.sql` (adds `profiles.started_on`; existing accounts get the day the account was created). Applied to the live database on 2026-11-14.
+
 ## Exercise list to pick from (2026-11-14)
 
 Tested in local-only mode on a computer at phone width, in a workout of your own tagged Chest. The saved-workout editor and program days use the same box and were not tested separately. Not yet confirmed on a phone.

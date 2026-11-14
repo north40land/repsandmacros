@@ -67,7 +67,7 @@ export default function App() {
   const signedIn = !supabase || Boolean(session)
   useEffect(() => {
     if (!ready || !loaded || !signedIn || v.hasProfile) return
-    write([['profiles', { id: db.uid, display_name: session?.user?.user_metadata?.display_name || '', program_id: null }]])
+    write([['profiles', { id: db.uid, display_name: session?.user?.user_metadata?.display_name || '', program_id: null, started_on: localDate() }]])
     setTab('settings')
     setWelcome(true)
   }, [ready, loaded, signedIn, v.hasProfile])

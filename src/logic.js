@@ -112,6 +112,22 @@ export function target(v, exerciseKey, block, week) {
   return max ? round5(max * weekInfo(block, week).pct) : null
 }
 
+// A person's first day in the app: the day they signed up, or the earliest day they
+// have logged anything for if they back-dated an entry. Days before it are left blank
+// everywhere, never shown as missed or zero.
+export function firstDay(v) {
+  const today = localDate()
+  const dates = [
+    v.profile.started_on,
+    ...v.workouts.map((w) => localDate(w.performed_at)),
+    ...Object.keys(v.foodLogs).filter((d) => v.foodLogs[d]?.length),
+    ...Object.keys(v.water).filter((d) => v.water[d]?.length),
+    ...Object.keys(v.sleep),
+    ...v.bodyMetrics.map((b) => b.measured_on),
+  ].filter((d) => d && d <= today)
+  return dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : today
+}
+
 // Program lifts are tracked by their fixed key; free-form ones by name.
 export const exKey = (ex) => ex.exercise_key || `name:${ex.name.trim().toLowerCase()}`
 

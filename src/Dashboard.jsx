@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { localDate, fromLocalDate, niceDate } from './logic'
+import { localDate, fromLocalDate, niceDate, firstDay } from './logic'
 import { addDays, mondayOf } from './calc'
 import { weekSummary, weekCsv } from './summary'
 
@@ -47,6 +47,7 @@ function Tile({ label, value, note, children, onClick }) {
 export default function Dashboard({ v, go }) {
   const thisWeek = mondayOf(localDate())
   const [start, setStart] = useState(thisWeek)
+  const firstWeek = mondayOf(firstDay(v))
   const s = weekSummary(v, start)
   const { unit } = s
 
@@ -69,7 +70,7 @@ export default function Dashboard({ v, go }) {
           </button>
         </div>
         <div className="datenav">
-          <button aria-label="Previous week" onClick={() => setStart(addDays(start, -7))}>
+          <button aria-label="Previous week" disabled={start <= firstWeek} onClick={() => setStart(addDays(start, -7))}>
             ‹
           </button>
           <h2>{s.isCurrent ? 'This week' : span(start)}</h2>
@@ -174,12 +175,12 @@ export default function Dashboard({ v, go }) {
       <h3>Nutrition adherence</h3>
       <div className="strip" role="list">
         {s.adherence.days.map((d) => {
-          const tone = d.future ? 'future' : d.within == null ? 'none' : d.within ? 'hit' : 'miss'
-          const label = d.future ? 'not yet' : !d.logged ? 'nothing logged' : d.within == null ? 'no targets' : d.within ? 'within tolerance' : 'outside tolerance'
+          const tone = d.future || d.before ? 'future' : d.within == null ? 'none' : d.within ? 'hit' : 'miss'
+          const label = d.before ? 'before you started' : d.future ? 'not yet' : !d.logged ? 'nothing logged' : d.within == null ? 'no targets' : d.within ? 'within tolerance' : 'outside tolerance'
           return (
-            <button key={d.date} role="listitem" className={`day ${tone}`} disabled={d.future} aria-label={`${short(d.date)}: ${label}`} onClick={() => go('food', { date: d.date })}>
+            <button key={d.date} role="listitem" className={`day ${tone}`} disabled={d.future || d.before} aria-label={`${short(d.date)}: ${label}`} onClick={() => go('food', { date: d.date })}>
               <span>{short(d.date)}</span>
-              <strong>{d.future ? '' : d.within == null ? '·' : d.within ? '✓' : '✕'}</strong>
+              <strong>{d.future || d.before ? '' : d.within == null ? '·' : d.within ? '✓' : '✕'}</strong>
             </button>
           )
         })}

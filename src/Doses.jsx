@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { write, uuid, nowISO } from './db'
-import { localDate, fromLocalDate, niceDate } from './logic'
+import { localDate, fromLocalDate, niceDate, firstDay } from './logic'
 import { addDays, mondayOf } from './calc'
 import { DAYS, dueOn, scheduledOn, dueToday, missedOn, logKey, hhmm, niceTime, niceClock } from './dosing'
 import { askConfirm } from './confirm'
@@ -339,6 +339,7 @@ function History({ v, onClose, onOpen }) {
   const today = localDate()
   const thisWeek = mondayOf(today)
   const [start, setStart] = useState(thisWeek)
+  const firstWeek = mondayOf(firstDay(v))
   const dates = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const short = (d) => new Date(fromLocalDate(d)).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2)
   const range = `${niceDate(fromLocalDate(dates[0])).split(', ')[1]} to ${niceDate(fromLocalDate(dates[6])).split(', ')[1]}`
@@ -364,7 +365,7 @@ function History({ v, onClose, onOpen }) {
       <div className="weekhead">
         <p className="eyebrow">Dosing history</p>
         <div className="datenav">
-          <button aria-label="Previous week" onClick={() => setStart(addDays(start, -7))}>
+          <button aria-label="Previous week" disabled={start <= firstWeek} onClick={() => setStart(addDays(start, -7))}>
             ‹
           </button>
           <h2>{start === thisWeek ? 'This week' : range}</h2>

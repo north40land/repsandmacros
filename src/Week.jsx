@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { write } from './db'
-import { localDate, fromLocalDate } from './logic'
+import { localDate, fromLocalDate, firstDay } from './logic'
 import { addDays, mondayOf, weekAdherence } from './calc'
 
 const COLS = [
@@ -20,6 +20,7 @@ const pct = (x) => (x == null ? 'n/a' : `${x}%`)
 export default function Week({ v, onClose, onPickDay }) {
   const thisWeek = mondayOf(localDate())
   const [start, setStart] = useState(thisWeek)
+  const firstWeek = mondayOf(firstDay(v))
   const w = weekAdherence(v, start)
   const [tol, setTol] = useState({ cal: String(w.tolCal), protein: String(w.tolProtein) })
 
@@ -40,7 +41,7 @@ export default function Week({ v, onClose, onPickDay }) {
       <div className="weekhead">
         <p className="eyebrow">Weekly adherence</p>
         <div className="datenav">
-          <button aria-label="Previous week" onClick={() => setStart(addDays(start, -7))}>
+          <button aria-label="Previous week" disabled={start <= firstWeek} onClick={() => setStart(addDays(start, -7))}>
             ‹
           </button>
           <h2>{start === thisWeek ? 'This week' : span(start)}</h2>
@@ -53,12 +54,12 @@ export default function Week({ v, onClose, onPickDay }) {
 
       <div className="strip" role="list">
         {w.days.map((d) => {
-          const tone = d.future ? 'future' : d.within == null ? 'none' : d.within ? 'hit' : 'miss'
-          const label = d.future ? 'not yet' : !d.logged ? 'nothing logged' : d.within == null ? 'no targets' : d.within ? 'within tolerance' : 'outside tolerance'
+          const tone = d.future || d.before ? 'future' : d.within == null ? 'none' : d.within ? 'hit' : 'miss'
+          const label = d.before ? 'before you started' : d.future ? 'not yet' : !d.logged ? 'nothing logged' : d.within == null ? 'no targets' : d.within ? 'within tolerance' : 'outside tolerance'
           return (
-            <button key={d.date} role="listitem" className={`day ${tone}`} disabled={d.future} aria-label={`${short(d.date)}: ${label}`} onClick={() => onPickDay(d.date)}>
+            <button key={d.date} role="listitem" className={`day ${tone}`} disabled={d.future || d.before} aria-label={`${short(d.date)}: ${label}`} onClick={() => onPickDay(d.date)}>
               <span>{short(d.date)}</span>
-              <strong>{d.future ? '' : d.within == null ? '·' : d.within ? '✓' : '✕'}</strong>
+              <strong>{d.future || d.before ? '' : d.within == null ? '·' : d.within ? '✓' : '✕'}</strong>
             </button>
           )
         })}
@@ -102,7 +103,7 @@ export default function Week({ v, onClose, onPickDay }) {
           </thead>
           <tbody>
             {w.days
-              .filter((d) => !d.future)
+              .filter((d) => !d.future && !d.before)
               .map((d) => (
                 <tr key={d.date}>
                   <td>{short(d.date)}</td>

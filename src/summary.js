@@ -1,4 +1,4 @@
-import { localDate, convert, history, exKey, loggedSets } from './logic'
+import { localDate, convert, history, exKey, loggedSets, firstDay } from './logic'
 import { addDays, weekAdherence } from './calc'
 import { targetFor } from './nutrition'
 import { dueToday, missedOn, logKey } from './dosing'
@@ -25,6 +25,7 @@ function weekVolume(v, start, unit) {
 
 export function weekSummary(v, start) {
   const today = localDate()
+  const first = firstDay(v)
   const unit = v.profile.default_unit
   const dates = Array.from({ length: 7 }, (_, i) => addDays(start, i))
   const end = dates[6]
@@ -35,7 +36,10 @@ export function weekSummary(v, start) {
   // Workouts and volume
   const workouts = v.workouts.filter((w) => w.finished_at && inWeek(w.performed_at))
   const volume = Math.round(workouts.reduce((n, w) => n + volumeOf(v, w, unit), 0))
-  const volumeTrend = Array.from({ length: 8 }, (_, i) => Math.round(weekVolume(v, addDays(start, -7 * (7 - i)), unit)))
+  // Up to 8 weeks, leaving out weeks from before this person started.
+  const volumeTrend = Array.from({ length: 8 }, (_, i) => addDays(start, -7 * (7 - i)))
+    .filter((monday) => addDays(monday, 6) >= first)
+    .map((monday) => Math.round(weekVolume(v, monday, unit)))
 
   // Nutrition
   const adherence = weekAdherence(v, start)
@@ -55,7 +59,7 @@ export function weekSummary(v, start) {
   // Sleep and water
   const nights = dates.map((d) => v.sleep[d]).filter(Boolean)
   const waterDays = dates
-    .filter((d) => d <= today)
+    .filter((d) => d <= today && d >= first)
     .map((d) => {
       const goal = Number(targetFor(v, d).target?.water_oz) || 0
       const drunk = (v.water[d] || []).reduce((n, l) => n + Number(l.amount_oz), 0)
@@ -137,6 +141,7 @@ export function weekCsv(v, s) {
   const unit = s.unit
   const rows = [['Date', 'Workouts', `Volume (${unit})`, 'Calories', 'Protein (g)', 'Carbs (g)', 'Fat (g)', 'Water (oz)', 'Sleep (h)', `Weight (${unit})`, 'Doses taken', 'Doses missed', 'Doses skipped']]
   for (const day of s.adherence.days) {
+    if (day.before) continue
     const d = day.date
     const done = v.workouts.filter((w) => w.finished_at && localDate(w.performed_at) === d)
     const weighIn = v.bodyMetrics.find((b) => b.measured_on === d && b.weight != null)

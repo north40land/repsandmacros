@@ -1,4 +1,4 @@
-import { localDate, fromLocalDate, convert } from './logic'
+import { localDate, fromLocalDate, convert, firstDay } from './logic'
 import { sum, targetFor, latestTarget } from './nutrition'
 import { uuid, nowISO } from './db'
 
@@ -147,6 +147,7 @@ const NUTRIENTS = ['calories', 'protein', 'carbs', 'fat']
 
 export function weekAdherence(v, start) {
   const today = localDate()
+  const first = firstDay(v)
   const tolCal = Number(v.metrics?.tol_calories_pct ?? METRIC_DEFAULTS.tol_calories_pct)
   const tolProtein = Number(v.metrics?.tol_protein_g ?? METRIC_DEFAULTS.tol_protein_g)
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -165,7 +166,8 @@ export function weekAdherence(v, start) {
       const proteinOk = !(target.protein > 0) || Math.abs(totals.protein - target.protein) <= tolProtein
       within = calOk && proteinOk
     }
-    return { date, future: date > today, logged, totals, target, dayType, pct, within }
+    // `before`: a day from before this person started. It is shown blank.
+    return { date, future: date > today, before: date < first, logged, totals, target, dayType, pct, within }
   })
   const counted = days.filter((d) => d.logged)
   const average = Object.fromEntries(
